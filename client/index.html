@@ -59,7 +59,7 @@
       <div style="margin-bottom:10px;">
         <button id="google-login-btn">🔐 Google 로그인</button>
         <span id="status">현재 상태: 익명 게이머</span>
-        <button id="theme-toggle">🌗 테마 전환</button>
+        <button onclick="toggleTheme()">🌗 테마 전환</button>
         <input type="file" id="profile-pic-input" accept="image/*">
       </div>
       <div class="input-row">
@@ -78,3 +78,4 @@
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider }
