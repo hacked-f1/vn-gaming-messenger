@@ -118,7 +118,7 @@ io.on('connection', (socket) => {
         type: 'system'
       };
       messageHistory.push(systemMsg);
-      if (messageHistory.length > MAX_HISTORY) {
+      if (messageHistory.le ngth > MAX_HISTORY) {
         messageHistory.shift();
       }
       io.emit('system-message', systemMsg);

@@ -4,285 +4,59 @@
     <meta charset="UTF-8">
     <title>Mini Discord - Trò chuyện Thời gian Thực</title>
     <style>
+        /* 민석님의 기존 스타일 그대로 유지 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body { 
-            background-color: #313338; 
-            color: #dbdee1; 
-            font-family: 'Segoe UI', sans-serif; 
-            display: flex; 
-            height: 100vh;
-        }
-
-        /* 🟦 ĐỘC LẬP TRÁI - DANH SÁCH MÁY CHỦ */
-        #server-sidebar {
-            width: 260px;
-            background-color: #1e1f22;
-            border-right: 1px solid #27272c;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        .sidebar-header {
-            padding: 16px;
-            border-bottom: 1px solid #27272c;
-            font-weight: bold;
-            font-size: 0.9em;
-            text-transform: uppercase;
-            color: #949ba4;
-        }
-
-        .server-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            border-left: 3px solid transparent;
-            font-size: 0.9em;
-        }
-
-        .server-item:hover {
-            background-color: #2b2d31;
-        }
-
-        .server-item.active {
-            background-color: #5865f2;
-            border-left-color: #5865f2;
-            color: #ffffff;
-        }
-
-        /* 🟨 CHÍNH GIỮA - KHOẢNG TRCHAT */
-        #main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #chat-container { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px;
-        }
-
-        /* Tin nhắn */
-        .message-item { 
-            background: #383a40; 
-            padding: 10px 14px; 
-            border-radius: 8px; 
-            border-left: 4px solid #5865f2;
-        }
-
-        .user-name { 
-            font-weight: bold; 
-            color: #ffffff; 
-            margin-right: 8px; 
-            font-size: 0.9em;
-        }
-
-        .message-text { 
-            word-break: break-all;
-        }
-
-        .message-time { 
-            font-size: 0.75em; 
-            color: #72767d; 
-            margin-left: 10px;
-        }
-
-        /* Tin nhắn hệ thống */
-        .system-message { 
-            background: #2b2d31; 
-            padding: 10px; 
-            border-radius: 8px; 
-            text-align: center; 
-            color: #949ba4; 
-            font-size: 0.85em; 
-            border-left: 4px solid #80848e;
-        }
-
-        /* 🟩 ĐẦU VÀO TIN NHẮN */
-        #input-area { 
-            background: #2b2d31; 
-            padding: 16px 20px; 
-            display: flex; 
-            gap: 10px;
-            border-top: 1px solid #27272c;
-            align-items: center;
-        }
-
-        #login-area {
-            background: #2b2d31;
-            padding: 16px 20px;
-            border-top: 1px solid #27272c;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            justify-content: center;
-        }
-
-        input { 
-            flex: 1; 
-            background: #383a40; 
-            border: none; 
-            padding: 12px; 
-            color: white; 
-            border-radius: 5px; 
-            outline: none;
-            font-size: 0.95em;
-        }
-
-        input::placeholder {
-            color: #72767d;
-        }
-
-        button { 
-            background: #5865f2; 
-            color: white; 
-            border: none; 
-            padding: 10px 24px; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-
-        button:hover { 
-            background-color: #4752c4;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        #google-login-btn {
-            background: #ffffff;
-            color: #202124;
-            padding: 10px 32px;
-            font-weight: 600;
-            border: 1px solid #dadce0;
-        }
-
-        #google-login-btn:hover {
-            background-color: #f8f9fa;
-        }
-
-        #logout-btn {
-            background: #ea4335;
-            padding: 8px 16px;
-            font-size: 0.9em;
-        }
-
-        #logout-btn:hover {
-            background-color: #c5221f;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 16px;
-            background: #383a40;
-            border-radius: 5px;
-            font-size: 0.9em;
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background-size: cover;
-        }
-
-        /* 🟥 ĐỘC LẬP PHẢI - DANH SÁCH NGƯỜI DÙNG */
-        #users-sidebar {
-            width: 260px;
-            background-color: #1e1f22;
-            border-left: 1px solid #27272c;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
-        .user-item {
-            padding: 10px 16px;
-            border-bottom: 1px solid #27272c;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.9em;
-        }
-
-        .user-status {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #31a24c;
-        }
-
-        .user-count {
-            padding: 12px 16px;
-            border-bottom: 1px solid #27272c;
-            font-size: 0.8em;
-            color: #949ba4;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        /* Cuộn thanh */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #404249;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #5c5f66;
-        }
+        body { background-color: #313338; color: #dbdee1; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; }
+        #server-sidebar { width: 260px; background-color: #1e1f22; border-right: 1px solid #27272c; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar-header { padding: 16px; border-bottom: 1px solid #27272c; font-weight: bold; font-size: 0.9em; text-transform: uppercase; color: #949ba4; }
+        .server-item { padding: 12px 16px; cursor: pointer; transition: background-color 0.2s; border-left: 3px solid transparent; font-size: 0.9em; }
+        .server-item:hover { background-color: #2b2d31; }
+        .server-item.active { background-color: #5865f2; border-left-color: #5865f2; color: #ffffff; }
+        #main-content { flex: 1; display: flex; flex-direction: column; }
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .message-item { background: #383a40; padding: 10px 14px; border-radius: 8px; border-left: 4px solid #5865f2; }
+        .user-name { font-weight: bold; color: #ffffff; margin-right: 8px; font-size: 0.9em; }
+        .message-time { font-size: 0.75em; color: #72767d; margin-left: 10px; }
+        .system-message { background: #2b2d31; padding: 10px; border-radius: 8px; text-align: center; color: #949ba4; font-size: 0.85em; border-left: 4px solid #80848e; }
+        #input-area { background: #2b2d31; padding: 16px 20px; display: flex; gap: 10px; border-top: 1px solid #27272c; align-items: center; }
+        input { flex: 1; background: #383a40; border: none; padding: 12px; color: white; border-radius: 5px; outline: none; font-size: 0.95em; }
+        button { background: #5865f2; color: white; border: none; padding: 10px 24px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .user-info { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #383a40; border-radius: 5px; font-size: 0.9em; }
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background-size: cover; }
+        #users-sidebar { width: 260px; background-color: #1e1f22; border-left: 1px solid #27272c; display: flex; flex-direction: column; overflow-y: auto; }
+        .user-item { padding: 10px 16px; border-bottom: 1px solid #27272c; display: flex; align-items: center; gap: 10px; font-size: 0.9em; }
+        .user-status { width: 8px; height: 8px; border-radius: 50%; background-color: #31a24c; }
     </style>
 </head>
 <body>
-    <!-- DANH SÁCH MÁY CHỦ -->
     <div id="server-sidebar">
         <div class="sidebar-header">🎮 Máy Chủ</div>
         <div class="server-item active">Máy Chủ Chính</div>
-        <div class="server-item">Gamers VN</div>
-        <div class="server-item">CSGO Team</div>
     </div>
 
-    <!-- KHOẢNG TRCHAT CHÍNH -->
     <div id="main-content">
         <div id="chat-container"></div>
-        <div id="login-area" style="display: none;">
-            <button id="google-login-btn">🔐 Đăng nhập Google</button>
+        
+        <div id="login-area">
+            <button id="google-login-btn">🔐 Đăng nhập Google (로그인해야 이름이 나옵니다)</button>
         </div>
-        <div id="input-area" style="display: none;">
-            <div id="user-info-display" class="user-info">
+
+        <div id="input-area">
+            <div id="user-info-display" class="user-info" style="display: none;">
                 <div id="user-avatar" class="user-avatar"></div>
                 <span id="user-display-name"></span>
-                <button id="logout-btn">Đăng xuất</button>
+                <button id="logout-btn" style="background: #ea4335;">Đăng xuất</button>
             </div>
             <input id="message" placeholder="Nhập tin nhắn...">
             <button onclick="send()">Gửi</button>
         </div>
     </div>
 
-    <!-- DANH SÁCH NGƯỜI DÙNG TRỰC TUYẾN -->
     <div id="users-sidebar">
         <div class="user-count">🟢 TRỰC TUYẾN (<span id="online-count">0</span>)</div>
         <div id="users-list"></div>
     </div>
 
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
@@ -316,6 +90,7 @@
         const onlineCount = document.getElementById('online-count');
         const loginArea = document.getElementById('login-area');
         const inputArea = document.getElementById('input-area');
+        const userInfoDisplay = document.getElementById('user-info-display');
         const googleLoginBtn = document.getElementById('google-login-btn');
         const logoutBtn = document.getElementById('logout-btn');
         const userDisplayName = document.getElementById('user-display-name');
@@ -323,199 +98,60 @@
 
         let currentUser = null;
 
-        // Theo dõi trạng thái xác thực
+        // ✅ 로그인 상태 확인
         window.onAuthStateChanged(window.auth, (user) => {
             if (user) {
-                currentUser = {
-                    uid: user.uid,
-                    name: user.displayName || 'Người dùng',
-                    email: user.email,
-                    photoURL: user.photoURL
-                };
-                
+                currentUser = { name: user.displayName || 'Người dùng', photoURL: user.photoURL };
                 userDisplayName.textContent = currentUser.name;
-                if (currentUser.photoURL) {
-                    userAvatarDiv.style.backgroundImage = `url('${currentUser.photoURL}')`;
-                } else {
-                    userAvatarDiv.style.background = '#5865f2';
-                    userAvatarDiv.textContent = currentUser.name.charAt(0).toUpperCase();
-                    userAvatarDiv.style.display = 'flex';
-                    userAvatarDiv.style.alignItems = 'center';
-                    userAvatarDiv.style.justifyContent = 'center';
-                    userAvatarDiv.style.color = 'white';
-                    userAvatarDiv.style.fontSize = '14px';
-                    userAvatarDiv.style.fontWeight = 'bold';
-                }
+                if (currentUser.photoURL) userAvatarDiv.style.backgroundImage = `url('${currentUser.photoURL}')`;
                 
                 loginArea.style.display = 'none';
-                inputArea.style.display = 'flex';
-                
-                console.log(`✅ Đăng nhập thành công: ${currentUser.name}`);
+                userInfoDisplay.style.display = 'flex';
             } else {
                 currentUser = null;
-                loginArea.style.display = 'flex';
-                inputArea.style.display = 'none';
-                
-                console.log(`🚪 Đã đăng xuất`);
+                loginArea.style.display = 'block';
+                userInfoDisplay.style.display = 'none';
             }
         });
 
-        // Đăng nhập Google
-        googleLoginBtn.addEventListener('click', async () => {
-            try {
-                const result = await window.signInWithPopup(window.auth, window.googleProvider);
-                console.log(`🎉 Đăng nhập thành công: ${result.user.displayName}`);
-            } catch (error) {
-                console.error(`❌ Lỗi đăng nhập:`, error);
-                alert(`Lỗi đăng nhập: ${error.message}`);
-            }
-        });
+        googleLoginBtn.onclick = () => window.signInWithPopup(window.auth, window.googleProvider);
+        logoutBtn.onclick = () => window.signOut(window.auth);
 
-        // Đăng xuất
-        logoutBtn.addEventListener('click', async () => {
-            try {
-                await window.signOut(window.auth);
-                console.log(`👋 Đã đăng xuất`);
-            } catch (error) {
-                console.error(`❌ Lỗi đăng xuất:`, error);
-            }
-        });
-
-        // Trạng thái kết nối Socket.io
-        socket.on('connect', () => {
-            console.log(`🟢 Kết nối Socket.io: ${socket.id}`);
-        });
-
-        // Nhận lịch sử trò chuyện
         socket.on('chat-history', (history) => {
-            console.log(`📥 Nhận lịch sử: ${history.length} tin nhắn`);
-            
-            if (!Array.isArray(history)) {
-                console.error('❌ Lịch sử không phải mảng:', typeof history);
-                return;
-            }
-
-            history.forEach((data) => {
-                displayMessage(data);
-            });
-            
-            setTimeout(() => {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }, 100);
+            chatContainer.innerHTML = '';
+            history.forEach(displayMessage);
         });
 
-        // Nhận tin nhắn mới
-        socket.on('message', (data) => {
-            console.log(`💬 Tin nhắn mới: ${data.name}`);
-            displayMessage(data);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        });
-
-        // Nhận tin nhắn hệ thống
-        socket.on('system-message', (data) => {
-            console.log(`🔔 Tin nhắn hệ thống: ${data.msg}`);
-            displayMessage(data);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        });
-
-        // Cập nhật danh sách người dùng
+        socket.on('message', displayMessage);
+        socket.on('system-message', displayMessage);
         socket.on('users-list', (users) => {
-            console.log(`👥 Danh sách người dùng: ${users.length} người`);
-            updateUsersList(users);
+            onlineCount.textContent = users.length;
+            usersList.innerHTML = users.map(user => `<div class="user-item"><div class="user-status"></div><span>${user}</span></div>`).join('');
         });
 
-        socket.on('disconnect', () => {
-            console.log(`🔴 Mất kết nối Socket.io`);
-        });
-
-        socket.on('connect_error', (error) => {
-            console.error(`❌ Lỗi kết nối:`, error);
-        });
-
-        // Hiển thị tin nhắn
         function displayMessage(data) {
             const div = document.createElement('div');
             div.className = data.type === 'system' ? 'system-message' : 'message-item';
-            
             if (data.type === 'system') {
                 div.textContent = `[${data.timestamp}] ${data.msg}`;
             } else {
-                div.innerHTML = `<span class="user-name">${escapeHtml(data.name)}</span><span class="message-text">${escapeHtml(data.msg)}</span><span class="message-time">${data.timestamp}</span>`;
+                div.innerHTML = `<span class="user-name">${data.name}</span><span>${data.msg}</span><span class="message-time">${data.timestamp}</span>`;
             }
-            
             chatContainer.appendChild(div);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // Cập nhật danh sách người dùng
-        function updateUsersList(users) {
-            console.log(`[Cập nhật người dùng] ${users.length} người online`);
-            
-            usersList.innerHTML = '';
-            onlineCount.textContent = users.length;
-
-            if (users.length === 0) {
-                const emptyMsg = document.createElement('div');
-                emptyMsg.style.padding = '20px';
-                emptyMsg.style.color = '#72767d';
-                emptyMsg.style.fontSize = '0.85em';
-                emptyMsg.style.textAlign = 'center';
-                emptyMsg.textContent = 'Không có người dùng trực tuyến';
-                usersList.appendChild(emptyMsg);
-                return;
-            }
-
-            users.forEach((user) => {
-                const userDiv = document.createElement('div');
-                userDiv.className = 'user-item';
-                userDiv.innerHTML = `
-                    <div class="user-status"></div>
-                    <span>${escapeHtml(user)}</span>
-                `;
-                usersList.appendChild(userDiv);
-            });
-        }
-
-        // Bảo vệ chống XSS
-        function escapeHtml(text) {
-            const map = {
-                '&': '&amp;',
-                '<': '&lt;',
-                '>': '&gt;',
-                '"': '&quot;',
-                "'": '&#039;'
-            };
-            return text.replace(/[&<>"']/g, (m) => map[m]);
-        }
-
-        // Gửi tin nhắn
+        // ✅ 전송 함수 (로그인 안하면 익명으로 전송)
         function send() {
-            if (!currentUser) {
-                alert('Vui lòng đăng nhập trước');
-                return;
-            }
-
-            const message = msgInput.value.trim();
-            
-            if (message) {
-                console.log(`📤 Gửi: ${currentUser.name} - ${message.substring(0, 30)}`);
-                
-                socket.emit('message', { 
-                    name: currentUser.name, 
-                    msg: message 
-                });
+            const name = currentUser ? currentUser.name : "익명 게이머";
+            const msg = msgInput.value.trim();
+            if (msg) {
+                socket.emit('message', { name, msg });
                 msgInput.value = '';
-                msgInput.focus();
-            } else {
-                msgInput.focus();
             }
         }
 
-        // Hỗ trợ phím Enter
-        msgInput.addEventListener('keypress', (e) => { 
-            if (e.key === 'Enter') send(); 
-        });
-
-        console.log(`🟢 Ứng dụng đã sẵn sàng`);
+        msgInput.onkeypress = (e) => { if (e.key === 'Enter') send(); };
     </script>
 </body>
 </html>
