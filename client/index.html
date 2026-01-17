@@ -1,98 +1,78 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>LIGHT / VOID</title>
-  <style>
-    /* 공통 스타일 및 변수 */
-    :root {
-      --void-neon: #a020f0;
-      --light-neon: #00aff4;
-      --radius: 12px; /* 사각사각함 탈출용 */
-    }
+    <meta charset="UTF-8">
+    <title>LIGHT / VOID PREMIUM</title>
+    <style>
+        :root { --void: #a020f0; --light: #00aff4; --bg: #0b0b0d; --panel: #151518; --radius: 18px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
+        body { background: var(--bg); color: #fff; display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
+        body.light-theme { --bg: #f0f2f5; --panel: #ffffff; color: #222; }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    body { display: flex; height: 100vh; font-family: 'Pretendard', sans-serif; overflow: hidden; }
+        /* 사이드바 */
+        #sidebar { width: 260px; background: var(--panel); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; padding: 20px; }
+        .server-item { padding: 15px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; border: 1px solid transparent; opacity: 0.6; }
+        .server-item.active { background: rgba(160,32,240,0.1); border-color: var(--void); color: var(--void); opacity: 1; font-weight: bold; }
+        body.light-theme .server-item.active { background: #e1f5fe; border-color: var(--light); color: var(--light); }
 
-    /* --- [VOID THEME] --- */
-    body { background-color: #080808; color: var(--void-neon); }
-    #server-sidebar { width: 240px; background-color: #000; border-right: 1px solid rgba(160, 32, 240, 0.3); display: flex; flex-direction: column; padding: 15px; }
-    .sidebar-header { padding: 10px; font-weight: 900; font-size: 1.2em; text-shadow: 0 0 10px var(--void-neon); margin-bottom: 20px; }
-    
-    .server-btn { width: 100%; padding: 12px 15px; margin-bottom: 8px; background: rgba(160, 32, 240, 0.05); border: 1px solid rgba(160, 32, 240, 0.2); 
-                  color: #fff; text-align: left; cursor: pointer; border-radius: var(--radius); font-size: 0.9em; font-weight: 500; }
-    .server-btn:hover, .server-btn.active { background: var(--void-neon); box-shadow: 0 0 15px var(--void-neon); border-color: transparent; }
+        /* 메인 채팅 */
+        #main-chat { flex: 1; display: flex; flex-direction: column; }
+        #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .msg-box { display: flex; gap: 12px; animation: slideIn 0.3s ease-out forwards; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .bubble { background: var(--panel); padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) var(--radius); max-width: 70%; line-height: 1.5; }
+        .my-msg { flex-direction: row-reverse; }
+        .my-msg .bubble { background: var(--void); color: #fff; border-radius: var(--radius) 0 var(--radius) var(--radius); }
+        body.light-theme .my-msg .bubble { background: var(--light); }
 
-    #main-content { flex: 1; display: flex; flex-direction: column; background: radial-gradient(circle at center, #111 0%, #000 100%); }
-    #chat-container { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
-    
-    .message-item { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(5px); border: 1px solid rgba(160, 32, 240, 0.1); 
-                    padding: 15px; border-radius: var(--radius); border-left: 4px solid var(--void-neon); }
-    .msg-name { font-weight: bold; color: #fff; margin-right: 10px; font-size: 0.9em; }
-    .msg-time { font-size: 0.75em; color: #444; }
+        /* 입력바 */
+        #input-area { padding: 20px; background: var(--panel); display: flex; gap: 10px; align-items: center; }
+        input[type="text"] { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; outline: none; }
+        body.light-theme input[type="text"] { background: #f5f5f5; color: #222; border-color: #ddd; }
+        
+        .btn { padding: 12px 20px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-send { background: var(--void); color: #fff; }
 
-    #input-area { background: rgba(0,0,0,0.8); padding: 20px; border-top: 1px solid rgba(160, 32, 240, 0.2); }
-    input#message { flex: 1; background: #111; border: 1px solid #222; padding: 14px; color: #fff; border-radius: var(--radius); outline: none; }
-    input#message:focus { border-color: var(--void-neon); box-shadow: 0 0 10px rgba(160, 32, 240, 0.2); }
-    
-    .btn-primary { background: var(--void-neon); color: white; border: none; padding: 10px 20px; border-radius: var(--radius); cursor: pointer; font-weight: bold; }
-    .btn-logout { background: transparent; border: 1px solid #444; color: #444; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.7em; }
-    .btn-logout:hover { color: #ff4d4d; border-color: #ff4d4d; }
-
-    /* --- [LIGHT THEME] --- */
-    body.light-theme { background-color: #f8f9fa; color: #333; }
-    body.light-theme #server-sidebar { background-color: #ffffff; border-right: 1px solid #eee; }
-    body.light-theme .sidebar-header { color: var(--light-neon); text-shadow: none; }
-    body.light-theme .server-btn { color: #555; background: #f1f3f5; border: none; }
-    body.light-theme .server-btn:hover, body.light-theme .server-btn.active { background: var(--light-neon); color: #fff; }
-    body.light-theme #main-content { background: #fff; }
-    body.light-theme .message-item { background: #f1f3f5; border: none; color: #333; border-left: 4px solid var(--light-neon); }
-    body.light-theme .msg-name { color: var(--light-neon); }
-    body.light-theme input#message { background: #fff; border: 1px solid #ddd; color: #333; }
-    body.light-theme .btn-primary { background: var(--light-neon); }
-
-    /* 온라인 리스트 */
-    #users-sidebar { width: 200px; background-color: rgba(0,0,0,0.2); padding: 20px; border-left: 1px solid rgba(160, 32, 240, 0.1); }
-    body.light-theme #users-sidebar { background-color: #f8f9fa; border-left: 1px solid #eee; }
-  </style>
+        /* 온라인 목록 */
+        #online-list { width: 200px; background: var(--panel); border-left: 1px solid rgba(255,255,255,0.05); padding: 20px; }
+        .user-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 0.9em; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+    </style>
 </head>
-<body class="void-theme">
+<body>
 
-  <div id="server-sidebar">
-    <div class="sidebar-header" id="brand-name">VOID SYSTEM</div>
-    <div style="font-size: 0.7em; color: #444; margin-bottom: 10px; padding-left: 10px;">NODES</div>
-    <div id="server-list">
-      <button class="server-btn active"># GLOBAL_LOBBY</button>
-    </div>
-    <button class="server-btn" style="margin-top:auto; background: #111; text-align: center;" onclick="createServer()">+ CREATE NODE</button>
-  </div>
+<div id="sidebar">
+    <h2 id="logo" style="margin-bottom: 25px; font-style: italic;">VOID SYSTEM</h2>
+    <div id="server-list" style="flex: 1; overflow-y: auto;"></div>
+    <button onclick="addServer()" style="background:none; border: 1px dashed #444; color:#666; padding:10px; border-radius:10px; cursor:pointer;">+ CREATE NODE</button>
+</div>
 
-  <div id="main-content">
-    <div id="chat-container"></div>
-    <div id="input-area">
-      <div style="margin-bottom:15px; display: flex; align-items: center; justify-content: space-between;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <button id="login-btn" class="btn-primary">ACCESS LOGIN</button>
-          <img id="user-profile-pic" style="width: 32px; height: 32px; border-radius: 50%; display: none; border: 2px solid var(--void-neon);">
-          <span id="status" style="font-size: 0.85em; font-weight: 500;">STATUS: OFFLINE</span>
-          <button id="logout-btn" class="btn-logout" style="display: none;" onclick="logout()">LOGOUT</button>
+<div id="main-chat">
+    <div style="padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div id="room-title" style="font-weight: bold;"># GLOBAL_LOBBY</div>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="document.body.classList.toggle('light-theme')" class="btn" style="background:#222; color:#fff; font-size:0.7em;">THEME</button>
+            <button id="auth-btn" onclick="handleAuth()" class="btn-send btn">LOGIN</button>
         </div>
-        <button onclick="toggleTheme()" id="theme-toggle-btn" class="btn-logout">ACTIVATE LIGHT</button>
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <input id="message" placeholder="ENTER ENCRYPTED MESSAGE..." onkeypress="if(event.keyCode==13) send()">
-        <button class="btn-primary" onclick="send()">SEND</button>
-      </div>
     </div>
-  </div>
+    <div id="messages"></div>
+    <div id="input-area">
+        <label for="file-input" style="cursor:pointer; font-size: 1.5rem;">🖼️</label>
+        <input type="file" id="file-input" style="display:none" accept="image/*">
+        <input type="text" id="msg-input" placeholder="메시지 전송..." onkeypress="if(event.keyCode==13) sendMsg()">
+        <button class="btn btn-send" onclick="sendMsg()">SEND</button>
+    </div>
+</div>
 
-  <div id="users-sidebar">
-    <h3 style="font-size: 0.8em; margin-bottom: 15px; letter-spacing: 1px;">ACTIVE_USERS</h3>
-    <div id="users-list"></div>
-  </div>
+<div id="online-list">
+    <div style="font-size: 0.8em; color: #555; margin-bottom: 15px;">ONLINE USERS</div>
+    <div id="users-box"></div>
+</div>
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script type="module">
+<script src="/socket.io/socket.io.js"></script>
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
@@ -104,78 +84,90 @@
       messagingSenderId: "561627453007",
       appId: "1:561627453007:web:71e824bc094a132ea97c3a"
     };
-    
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
     const socket = io();
 
-    window.userName = "UNKNOWN_GAMER";
-    window.profilePic = "";
+    let myInfo = { name: "익명", pic: `https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`, server: "GLOBAL_LOBBY" };
 
-    // 로그인
-    document.getElementById('login-btn').addEventListener('click', () => signInWithPopup(auth, provider));
-
-    // 로그아웃
-    window.logout = function() {
-      if(confirm("로그아웃 하시겠습니까?")) {
-        signOut(auth).then(() => location.reload());
-      }
+    // 인증
+    window.handleAuth = () => {
+        if(auth.currentUser) signOut(auth).then(() => location.reload());
+        else signInWithPopup(auth, provider);
     };
 
-    // 상태 감시
     onAuthStateChanged(auth, (user) => {
-      const loginBtn = document.getElementById('login-btn');
-      const logoutBtn = document.getElementById('logout-btn');
-      const profilePicImg = document.getElementById('user-profile-pic');
-      
-      if (user) {
-        window.userName = user.displayName;
-        window.profilePic = user.photoURL;
-        document.getElementById('status').innerText = window.userName.toUpperCase();
-        loginBtn.style.display = 'none';
-        logoutBtn.style.display = 'inline-block';
-        profilePicImg.src = window.profilePic;
-        profilePicImg.style.display = 'block';
-        socket.emit('message', { name: 'SYSTEM', msg: `${window.userName} 님이 연결되었습니다.` });
-      }
+        if (user) {
+            myInfo.name = user.displayName;
+            myInfo.pic = user.photoURL;
+            document.getElementById('auth-btn').innerText = "LOGOUT";
+            socket.emit('join-server', myInfo);
+        }
     });
 
-    // 서버 생성 (UI)
-    window.createServer = function() {
-      const name = prompt("생성할 서버 이름을 입력하세요:");
-      if(name) {
-        const list = document.getElementById('server-list');
-        const btn = document.createElement('button');
-        btn.className = 'server-btn';
-        btn.innerText = `# ${name.toUpperCase()}`;
-        list.appendChild(btn);
-      }
+    // 서버 관리
+    window.addServer = () => {
+        const s = prompt("서버 이름을 입력하세요:");
+        if(s) socket.emit('create-server', s.toUpperCase());
     };
 
-    window.send = function() {
-      const msgInput = document.getElementById('message');
-      if (msgInput.value.trim()) {
-        socket.emit('message', { name: window.userName, msg: msgInput.value, pic: window.profilePic });
-        msgInput.value = "";
-      }
-    };
-
-    socket.on('message', (data) => {
-      const container = document.getElementById('chat-container');
-      const div = document.createElement('div');
-      div.className = 'message-item';
-      div.innerHTML = `<span class="msg-name">${data.name}</span><br>${data.msg}`;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
+    socket.on('server-list', (list) => {
+        const box = document.getElementById('server-list');
+        box.innerHTML = list.map(s => `<div class="server-item ${s === myInfo.server ? 'active' : ''}" onclick="switchRoom('${s}')"># ${s}</div>`).join('');
     });
 
-    window.toggleTheme = function() {
-      document.body.classList.toggle('light-theme');
-      const isLight = document.body.classList.contains('light-theme');
-      document.getElementById('theme-toggle-btn').innerText = isLight ? "ACTIVATE VOID" : "ACTIVATE LIGHT";
-      document.getElementById('brand-name').innerText = isLight ? "LIGHT MESSENGER" : "VOID SYSTEM";
+    window.switchRoom = (s) => {
+        myInfo.server = s;
+        document.getElementById('room-title').innerText = `# ${s}`;
+        document.getElementById('messages').innerHTML = '';
+        socket.emit('join-server', myInfo);
     };
-  </script>
+
+    // 메시지
+    window.sendMsg = () => {
+        const input = document.getElementById('msg-input');
+        if(input.value.trim()) {
+            socket.emit('message', { msg: input.value });
+            input.value = '';
+        }
+    };
+
+    // 이미지 파일 처리
+    document.getElementById('file-input').onchange = function(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = () => socket.emit('message', { msg: "이미지를 보냈습니다.", file: reader.result });
+        reader.readAsDataURL(file);
+    };
+
+    socket.on('message', (data) => renderMsg(data));
+    socket.on('chat-history', (history) => history.forEach(renderMsg));
+
+    function renderMsg(data) {
+        const box = document.getElementById('messages');
+        const isMe = data.name === myInfo.name;
+        const div = document.createElement('div');
+        div.className = `msg-box ${isMe ? 'my-msg' : ''}`;
+        div.innerHTML = `
+            <img src="${data.pic}" class="avatar">
+            <div class="bubble">
+                <div style="font-size:0.7em; opacity:0.6; margin-bottom:4px;">${data.name}</div>
+                ${data.file ? `<img src="${data.file}" style="max-width:100%; border-radius:10px; margin-bottom:5px;"><br>` : ''}
+                ${data.msg}
+                <div style="font-size:0.6em; opacity:0.4; text-align:right; margin-top:4px;">${data.timestamp}</div>
+            </div>
+        `;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    socket.on('online-users', (users) => {
+        document.getElementById('users-box').innerHTML = users.map(u => `
+            <div class="user-item"><img src="${u.pic}" class="avatar"> <span>${u.name}</span></div>
+        `).join('');
+    });
+</script>
 </body>
 </html>
