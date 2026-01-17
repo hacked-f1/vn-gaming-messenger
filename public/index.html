@@ -4,62 +4,54 @@
     <meta charset="UTF-8">
     <title>Mini Discord - Trò chuyện Thời gian Thực</title>
     <style>
-        /* 민석님의 기존 스타일 그대로 유지 */
+        /* 민석님의 스타일 그대로 */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #313338; color: #dbdee1; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; }
-        #server-sidebar { width: 260px; background-color: #1e1f22; border-right: 1px solid #27272c; display: flex; flex-direction: column; overflow-y: auto; }
-        .sidebar-header { padding: 16px; border-bottom: 1px solid #27272c; font-weight: bold; font-size: 0.9em; text-transform: uppercase; color: #949ba4; }
-        .server-item { padding: 12px 16px; cursor: pointer; transition: background-color 0.2s; border-left: 3px solid transparent; font-size: 0.9em; }
-        .server-item:hover { background-color: #2b2d31; }
-        .server-item.active { background-color: #5865f2; border-left-color: #5865f2; color: #ffffff; }
+        #server-sidebar { width: 200px; background-color: #1e1f22; border-right: 1px solid #27272c; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 16px; font-weight: bold; color: #949ba4; border-bottom: 1px solid #27272c; }
         #main-content { flex: 1; display: flex; flex-direction: column; }
         #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .message-item { background: #383a40; padding: 10px 14px; border-radius: 8px; border-left: 4px solid #5865f2; }
-        .user-name { font-weight: bold; color: #ffffff; margin-right: 8px; font-size: 0.9em; }
-        .message-time { font-size: 0.75em; color: #72767d; margin-left: 10px; }
-        .system-message { background: #2b2d31; padding: 10px; border-radius: 8px; text-align: center; color: #949ba4; font-size: 0.85em; border-left: 4px solid #80848e; }
-        #input-area { background: #2b2d31; padding: 16px 20px; display: flex; gap: 10px; border-top: 1px solid #27272c; align-items: center; }
-        input { flex: 1; background: #383a40; border: none; padding: 12px; color: white; border-radius: 5px; outline: none; font-size: 0.95em; }
-        button { background: #5865f2; color: white; border: none; padding: 10px 24px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .user-info { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #383a40; border-radius: 5px; font-size: 0.9em; }
-        .user-avatar { width: 32px; height: 32px; border-radius: 50%; background-size: cover; }
-        #users-sidebar { width: 260px; background-color: #1e1f22; border-left: 1px solid #27272c; display: flex; flex-direction: column; overflow-y: auto; }
-        .user-item { padding: 10px 16px; border-bottom: 1px solid #27272c; display: flex; align-items: center; gap: 10px; font-size: 0.9em; }
-        .user-status { width: 8px; height: 8px; border-radius: 50%; background-color: #31a24c; }
+        .message-item { background: #383a40; padding: 10px; border-radius: 8px; border-left: 4px solid #5865f2; }
+        #input-area { background: #2b2d31; padding: 20px; border-top: 1px solid #27272c; }
+        .input-row { display: flex; gap: 10px; margin-top: 10px; }
+        input { flex: 1; background: #383a40; border: none; padding: 12px; color: white; border-radius: 5px; outline: none; }
+        button { background: #5865f2; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #google-login-btn { background: #ffffff; color: #000; margin-bottom: 10px; width: 100%; }
+        #users-sidebar { width: 200px; background-color: #1e1f22; border-left: 1px solid #27272c; padding: 10px; }
     </style>
 </head>
 <body>
     <div id="server-sidebar">
-        <div class="sidebar-header">🎮 Máy Chủ</div>
-        <div class="server-item active">Máy Chủ Chính</div>
+        <div class="sidebar-header">🎮 SERVERS</div>
     </div>
 
     <div id="main-content">
         <div id="chat-container"></div>
         
-        <div id="login-area">
-            <button id="google-login-btn">🔐 Đăng nhập Google (로그인해야 이름이 나옵니다)</button>
-        </div>
-
         <div id="input-area">
-            <div id="user-info-display" class="user-info" style="display: none;">
-                <div id="user-avatar" class="user-avatar"></div>
-                <span id="user-display-name"></span>
-                <button id="logout-btn" style="background: #ea4335;">Đăng xuất</button>
+            <div id="login-section">
+                <button id="google-login-btn">🔐 Đăng nhập bằng Google (로그인)</button>
             </div>
-            <input id="message" placeholder="Nhập tin nhắn...">
-            <button onclick="send()">Gửi</button>
+
+            <div id="user-info" style="margin-bottom: 10px; font-weight: bold; color: #5865f2;">
+                상태: <span id="status">로그인 대기 중...</span>
+            </div>
+
+            <div class="input-row">
+                <input id="message" placeholder="Nhập tin nhắn... (메시지를 입력하세요)">
+                <button onclick="send()">Gửi</button>
+            </div>
         </div>
     </div>
 
     <div id="users-sidebar">
-        <div class="user-count">🟢 TRỰC TUYẾN (<span id="online-count">0</span>)</div>
+        <div style="font-weight: bold; margin-bottom: 10px;">🟢 ONLINE</div>
         <div id="users-list"></div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBA5UpytVU_dfQI4pMJ7A-pr4LN4jfU7lo",
@@ -72,81 +64,50 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
+        const provider = new GoogleAuthProvider();
 
+        // 전역 변수로 설정
         window.auth = auth;
-        window.googleProvider = googleProvider;
+        window.provider = provider;
         window.signInWithPopup = signInWithPopup;
-        window.signOut = signOut;
-        window.onAuthStateChanged = onAuthStateChanged;
     </script>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const chatContainer = document.getElementById('chat-container');
         const msgInput = document.getElementById('message');
-        const usersList = document.getElementById('users-list');
-        const onlineCount = document.getElementById('online-count');
-        const loginArea = document.getElementById('login-area');
-        const inputArea = document.getElementById('input-area');
-        const userInfoDisplay = document.getElementById('user-info-display');
-        const googleLoginBtn = document.getElementById('google-login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const userDisplayName = document.getElementById('user-display-name');
-        const userAvatarDiv = document.getElementById('user-avatar');
+        const chatContainer = document.getElementById('chat-container');
+        const statusSpan = document.getElementById('status');
+        const loginBtn = document.getElementById('google-login-btn');
 
-        let currentUser = null;
+        let userName = "익명 게이머";
 
-        // ✅ 로그인 상태 확인
-        window.onAuthStateChanged(window.auth, (user) => {
-            if (user) {
-                currentUser = { name: user.displayName || 'Người dùng', photoURL: user.photoURL };
-                userDisplayName.textContent = currentUser.name;
-                if (currentUser.photoURL) userAvatarDiv.style.backgroundImage = `url('${currentUser.photoURL}')`;
-                
-                loginArea.style.display = 'none';
-                userInfoDisplay.style.display = 'flex';
-            } else {
-                currentUser = null;
-                loginArea.style.display = 'block';
-                userInfoDisplay.style.display = 'none';
+        // 1. 로그인 버튼 클릭 이벤트
+        loginBtn.onclick = async () => {
+            try {
+                const result = await window.signInWithPopup(window.auth, window.provider);
+                userName = result.user.displayName;
+                statusSpan.textContent = userName + "님 환영합니다!";
+                loginBtn.style.display = 'none';
+            } catch (e) {
+                alert("로그인 실패: " + e.message);
             }
-        });
+        };
 
-        googleLoginBtn.onclick = () => window.signInWithPopup(window.auth, window.googleProvider);
-        logoutBtn.onclick = () => window.signOut(window.auth);
-
-        socket.on('chat-history', (history) => {
-            chatContainer.innerHTML = '';
-            history.forEach(displayMessage);
-        });
-
-        socket.on('message', displayMessage);
-        socket.on('system-message', displayMessage);
-        socket.on('users-list', (users) => {
-            onlineCount.textContent = users.length;
-            usersList.innerHTML = users.map(user => `<div class="user-item"><div class="user-status"></div><span>${user}</span></div>`).join('');
-        });
-
-        function displayMessage(data) {
+        // 2. 메시지 수신
+        socket.on('message', (data) => {
             const div = document.createElement('div');
-            div.className = data.type === 'system' ? 'system-message' : 'message-item';
-            if (data.type === 'system') {
-                div.textContent = `[${data.timestamp}] ${data.msg}`;
-            } else {
-                div.innerHTML = `<span class="user-name">${data.name}</span><span>${data.msg}</span><span class="message-time">${data.timestamp}</span>`;
-            }
+            div.className = 'message-item';
+            div.innerHTML = `<strong>${data.name}:</strong> ${data.msg}`;
             chatContainer.appendChild(div);
             chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
+        });
 
-        // ✅ 전송 함수 (로그인 안하면 익명으로 전송)
+        // 3. 메시지 전송
         function send() {
-            const name = currentUser ? currentUser.name : "익명 게이머";
             const msg = msgInput.value.trim();
             if (msg) {
-                socket.emit('message', { name, msg });
+                socket.emit('message', { name: userName, msg: msg });
                 msgInput.value = '';
             }
         }
