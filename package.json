@@ -11,7 +11,18 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.8.3"
-  }
+    "express": "^4.22.1",
+    "peer": "^1.0.2",
+    "socket.io": "^4.8.3",
+    "uuid": "^13.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hacked-f1/vn-gaming-messenger.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/hacked-f1/vn-gaming-messenger/issues"
+  },
+  "homepage": "https://github.com/hacked-f1/vn-gaming-messenger#readme"
 }
