@@ -5,22 +5,45 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
+
+// ========================================
+// 🔧 환경 설정 (로컬 & Render 배포 대응)
+// ========================================
+const PORT = process.env.PORT || 3000;
+
+// CORS 설정: 로컬/배포 환경 모두 지원
+const corsOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'http://127.0.0.1:3000',
+  'https://vn-gaming-messenger.onrender.com'
+];
+
+// 환경 변수에서 추가 CORS 도메인 가능
+if (process.env.CORS_ORIGIN) {
+  corsOrigins.push(process.env.CORS_ORIGIN);
+}
+
 const io = new Server(server, {
   cors: { 
-    origin: "http://localhost:3000",
+    origin: corsOrigins,
+    methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
 app.use(express.static(path.join(__dirname, '../client')));
 
-// Theo dõi người dùng kết nối
+// ========================================
+// 📊 데이터 저장소
+// ========================================
 const users = new Map(); // socketId -> userName
-
-// Lịch sử tin nhắn (tối đa 50 tin)
 const messageHistory = [];
 const MAX_HISTORY = 50;
 
+// ========================================
+// 🔗 Socket.io 연결 처리
+// ========================================
 io.on('connection', (socket) => {
   const timestamp = new Date().toLocaleTimeString('ko-KR');
   console.log(`\n[접속 ${timestamp}] 사용자 ID: ${socket.id}`);
@@ -125,7 +148,17 @@ io.on('connection', (socket) => {
   io.emit('system-message', systemMsg);
 });
 
-server.listen(3000, 'localhost', () => {
-  console.log('\n✅ 서버가 http://localhost:3000에서 작동 중!');
-  console.log('📌 접속: http://localhost:3000\n');
+// ========================================
+// 🚀 서버 실행
+// ========================================
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n╔════════════════════════════════════════════╗`);
+  console.log(`║  ✅ 서버가 포트 ${PORT}에서 작동 중!`);
+  console.log(`║  🌍 CORS 허용 도메인:`);
+  corsOrigins.forEach(origin => {
+    console.log(`║     - ${origin}`);
+  });
+  console.log(`║  📌 로컬 접속: http://localhost:${PORT}`);
+  console.log(`║  🎮 베트남 게이머 메신저`);
+  console.log(`╚════════════════════════════════════════════╝\n`);
 });
