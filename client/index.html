@@ -5,7 +5,7 @@
   <title>LIGHT Messenger (Gaming)</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background-color: #202225; color: #dcddde; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; }
+    body { background-color: #202225; color: #dcddde; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; transition: 0.3s; }
     body.light-theme { background-color: #f2f3f5; color: #2e2e2e; }
 
     /* 좌측 서버 사이드바 */
@@ -21,61 +21,116 @@
     /* 메인 채팅 영역 */
     #main-content { flex: 1; display: flex; flex-direction: column; }
     #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-    .message-item { background: #36393f; padding: 10px; border-radius: 8px; display: flex; align-items: center; }
-    body.light-theme .message-item { background: #e3e5e8; }
-    .system-message { color: #b9bbbe; font-style: italic; }
-    body.light-theme .system-message { color: #555; }
+    .message-item { background: #36393f; padding: 10px; border-radius: 8px; margin-bottom: 5px; }
+    body.light-theme .message-item { background: #fff; border: 1px solid #ddd; }
+    .msg-name { font-weight: bold; color: #00aff4; margin-right: 8px; }
+    .msg-time { font-size: 0.8em; color: #72767d; }
 
     /* 입력 영역 */
     #input-area { background: #2f3136; padding: 20px; border-top: 1px solid #202225; }
     body.light-theme #input-area { background: #e3e5e8; border-top: 1px solid #ccc; }
     .input-row { display: flex; gap: 10px; }
-    input { flex: 1; background: #40444b; border: none; padding: 12px; color: white; border-radius: 5px; outline: none; }
-    body.light-theme input { background: #fff; color: #000; border: 1px solid #ccc; }
+    input#message { flex: 1; background: #40444b; border: none; padding: 12px; color: white; border-radius: 5px; outline: none; }
+    body.light-theme input#message { background: #fff; color: #000; border: 1px solid #ccc; }
     button { background: #5865f2; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #4752c4; }
 
     /* 우측 온라인 유저 목록 */
     #users-sidebar { width: 220px; background-color: #2f3136; border-left: 1px solid #202225; padding: 10px; }
     body.light-theme #users-sidebar { background-color: #e3e5e8; border-left: 1px solid #ccc; }
-    #users-sidebar h3 { color: #b9bbbe; margin-bottom: 10px; }
+    #users-sidebar h3 { color: #b9bbbe; margin-bottom: 10px; font-size: 0.9em; }
     body.light-theme #users-sidebar h3 { color: #333; }
-    #users-list { color: #dcddde; }
-    body.light-theme #users-list { color: #333; }
   </style>
 </head>
 <body>
-  <!-- 좌측 서버 목록 -->
   <div id="server-sidebar">
     <div class="sidebar-header">🎮 SERVERS</div>
     <div class="server-item">Máy Chủ Chính</div>
     <div class="server-item">Gamers VN</div>
-    <div class="server-item">CSGO Team</div>
   </div>
 
-  <!-- 메인 채팅 -->
   <div id="main-content">
     <div id="chat-container"></div>
     <div id="input-area">
-      <div style="margin-bottom:10px;">
-        <button id="google-login-btn">🔐 Google 로그인</button>
-        <span id="status">현재 상태: 익명 게이머</span>
+      <div style="margin-bottom:10px; display: flex; align-items: center; gap: 10px;">
+        <button id="login-btn">🔐 Google 로그인</button>
+        <span id="status">상태: 익명 게이머</span>
         <button onclick="toggleTheme()">🌗 테마 전환</button>
-        <input type="file" id="profile-pic-input" accept="image/*">
       </div>
       <div class="input-row">
-        <input id="message" placeholder="메시지를 입력하세요...">
+        <input id="message" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) send()">
         <button onclick="send()">전송</button>
       </div>
     </div>
   </div>
 
-  <!-- 우측 유저 목록 -->
   <div id="users-sidebar">
     <h3>🟢 ONLINE (<span id="user-count">0</span>)</h3>
     <div id="users-list"></div>
   </div>
 
-  <!-- Firebase SDK -->
+  <script src="/socket.io/socket.io.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider }
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+    // 1. Firebase 설정 (민석님의 Firebase 정보로 자동 연결됩니다)
+    const firebaseConfig = {
+      apiKey: "AIzaSy...", // 여기에 민석님의 API Key가 있어야 합니다.
+      authDomain: "vn-gaming-messenger.firebaseapp.com",
+      projectId: "vn-gaming-messenger",
+      appId: "1:..."
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    // 전역 변수
+    window.userName = "익명 게이머";
+    const socket = io();
+
+    // 2. 로그인 로직
+    document.getElementById('login-btn').addEventListener('click', () => {
+      signInWithPopup(auth, provider).then((result) => {
+        window.userName = result.user.displayName;
+        document.getElementById('status').innerText = `상태: ${window.userName}님 접속 중`;
+        document.getElementById('login-btn').style.display = 'none';
+      }).catch(err => console.error("로그인 실패:", err));
+    });
+
+    // 3. 채팅 전송 로직
+    window.send = function() {
+      const msgInput = document.getElementById('message');
+      if (msgInput.value.trim() !== "") {
+        socket.emit('message', {
+          name: window.userName,
+          msg: msgInput.value
+        });
+        msgInput.value = "";
+      }
+    };
+
+    // 4. 메시지 수신 로직
+    socket.on('message', (data) => {
+      const chatContainer = document.getElementById('chat-container');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'message-item';
+      msgDiv.innerHTML = `<span class="msg-name">${data.name}</span><span class="msg-time">${data.timestamp}</span><br>${data.msg}`;
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    });
+
+    // 5. 유저 리스트 업데이트
+    socket.on('users-list', (list) => {
+      document.getElementById('user-count').innerText = list.length;
+      document.getElementById('users-list').innerHTML = list.map(u => `<div>• ${u}</div>`).join('');
+    });
+
+    // 6. 테마 전환 함수
+    window.toggleTheme = function() {
+      document.body.classList.toggle('light-theme');
+    };
+  </script>
+</body>
+</html>
