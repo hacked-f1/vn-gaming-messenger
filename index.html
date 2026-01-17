@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Mini Discord - Trò chuyện Thời gian Thực</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body { 
+            background-color: #313338; 
+            color: #dbdee1; 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; 
+            height: 100vh;
+        }
+
+        /* 🟦 ĐỘC LẬP TRÁI - DANH SÁCH MÁY CHỦ */
+        #server-sidebar {
+            width: 260px;
+            background-color: #1e1f22;
+            border-right: 1px solid #27272c;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #27272c;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            color: #949ba4;
+        }
+
+        .server-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 0.9em;
+        }
+
+        .server-item:hover {
+            background-color: #2b2d31;
+        }
+
+        .server-item.active {
+            background-color: #5865f2;
+            border-left-color: #5865f2;
+            color: #ffffff;
+        }
+
+        /* 🟨 CHÍNH GIỮA - KHOẢNG TRCHAT */
+        #main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chat-container { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+        }
+
+        /* Tin nhắn */
+        .message-item { 
+            background: #383a40; 
+            padding: 10px 14px; 
+            border-radius: 8px; 
+            border-left: 4px solid #5865f2;
+        }
+
+        .user-name { 
+            font-weight: bold; 
+            color: #ffffff; 
+            margin-right: 8px; 
+            font-size: 0.9em;
+        }
+
+        .message-text { 
+            word-break: break-all;
+        }
+
+        .message-time { 
+            font-size: 0.75em; 
+            color: #72767d; 
+            margin-left: 10px;
+        }
+
+        /* Tin nhắn hệ thống */
+        .system-message { 
+            background: #2b2d31; 
+            padding: 10px; 
+            border-radius: 8px; 
+            text-align: center; 
+            color: #949ba4; 
+            font-size: 0.85em; 
+            border-left: 4px solid #80848e;
+        }
+
+        /* 🟩 ĐẦU VÀO TIN NHẮN */
+        #input-area { 
+            background: #2b2d31; 
+            padding: 16px 20px; 
+            display: flex; 
+            gap: 10px;
+            border-top: 1px solid #27272c;
+        }
+
+        input { 
+            flex: 1; 
+            background: #383a40; 
+            border: none; 
+            padding: 12px; 
+            color: white; 
+            border-radius: 5px; 
+            outline: none;
+            font-size: 0.95em;
+        }
+
+        input::placeholder {
+            color: #72767d;
+        }
+
+        button { 
+            background: #5865f2; 
+            color: white; 
+            border: none; 
+            padding: 10px 24px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        button:hover { 
+            background-color: #4752c4;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* 🟥 ĐỘC LẬP PHẢI - DANH SÁCH NGƯỜI DÙNG */
+        #users-sidebar {
+            width: 260px;
+            background-color: #1e1f22;
+            border-left: 1px solid #27272c;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            padding: 10px 16px;
+            border-bottom: 1px solid #27272c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .user-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #31a24c;
+        }
+
+        .user-count {
+            padding: 12px 16px;
+            border-bottom: 1px solid #27272c;
+            font-size: 0.8em;
+            color: #949ba4;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        /* Cuộn thanh */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #404249;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5c5f66;
+        }
+    </style>
+</head>
+<body>
+    <!-- DANH SÁCH MÁY CHỦ -->
+    <div id="server-sidebar">
+        <div class="sidebar-header">🎮 Máy Chủ</div>
+        <div class="server-item active">Máy Chủ Chính</div>
+        <div class="server-item">Gamers VN</div>
+        <div class="server-item">CSGO Team</div>
+    </div>
+
+    <!-- KHOẢNG TRCHAT CHÍNH -->
+    <div id="main-content">
+        <div id="chat-container"></div>
+        <div id="input-area">
+            <input id="nickname" placeholder="Biệt danh" style="flex: 0.2;">
+            <input id="message" placeholder="Nhập tin nhắn...">
+            <button onclick="send()">Gửi</button>
+        </div>
+    </div>
+
+    <!-- DANH SÁCH NGƯỜI DÙNG TRỰC TUYẾN -->
+    <div id="users-sidebar">
+        <div class="user-count">🟢 TRỰC TUYẾN (<span id="online-count">0</span>)</div>
+        <div id="users-list"></div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // ⚠️ Quan trọng: Đăng ký tất cả các trình nghe sự kiện ngay sau khi tạo socket
+        const socket = io();
+        const chatContainer = document.getElementById('chat-container');
+        const nickInput = document.getElementById('nickname');
+        const msgInput = document.getElementById('message');
+        const usersList = document.getElementById('users-list');
+        const onlineCount = document.getElementById('online-count');
+
+        // Trạng thái kết nối
+        socket.on('connect', () => {
+            console.log(`🟢 서버에 연결됨 (소켓 ID: ${socket.id})`);
+        });
+
+        // Nhận lịch sử trò chuyện khi vừa tham gia
+        socket.on('chat-history', (history) => {
+            console.log(`📥 채팅 히스토리 수신: ${history.length}개 메시지`);
+            
+            if (!Array.isArray(history)) {
+                console.error('❌ 히스토리가 배열이 아닙니다:', typeof history);
+                return;
+            }
+
+            history.forEach((data, index) => {
+                console.log(`  [${index + 1}] ${data.name}: ${data.msg?.substring(0, 20)}...`);
+                displayMessage(data);
+            });
+            
+            console.log(`✅ 히스토리 렌더링 완료 (${chatContainer.children.length}개 메시지)`);
+            
+            setTimeout(() => {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 100);
+        });
+
+        // Nhận tin nhắn mới (thời gian thực)
+        socket.on('message', (data) => {
+            console.log(`💬 새 메시지: ${data.name} - ${data.msg.substring(0, 20)}`);
+            displayMessage(data);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+
+        // Nhận tin nhắn hệ thống (tham gia/rời đi)
+        socket.on('system-message', (data) => {
+            console.log(`🔔 시스템 메시지: ${data.msg}`);
+            displayMessage(data);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+
+        // Cập nhật danh sách người dùng trực tuyến
+        socket.on('users-list', (users) => {
+            console.log(`👥 사용자 목록 업데이트: ${users.length}명`);
+            updateUsersList(users);
+        });
+
+        socket.on('disconnect', () => {
+            console.log(`🔴 서버 연결 끊김`);
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error(`❌ 연결 에러:`, error);
+        });
+
+        // Tải biệt danh từ localStorage
+        const savedNickname = localStorage.getItem('chatNickname');
+        if (savedNickname) {
+            nickInput.value = savedNickname;
+            console.log(`✅ 저장된 별명 로드: ${savedNickname}`);
+        }
+
+        // Lưu biệt danh khi thay đổi
+        nickInput.addEventListener('change', () => {
+            if (nickInput.value.trim()) {
+                localStorage.setItem('chatNickname', nickInput.value.trim());
+            }
+        });
+
+        // Hiển thị tin nhắn
+        function displayMessage(data) {
+            const div = document.createElement('div');
+            div.className = data.type === 'system' ? 'system-message' : 'message-item';
+            
+            if (data.type === 'system') {
+                div.textContent = `[${data.timestamp}] ${data.msg}`;
+            } else {
+                div.innerHTML = `<span class="user-name">${escapeHtml(data.name)}</span><span class="message-text">${escapeHtml(data.msg)}</span><span class="message-time">${data.timestamp}</span>`;
+            }
+            
+            chatContainer.appendChild(div);
+        }
+
+        // Cập nhật danh sách người dùng
+        function updateUsersList(users) {
+            console.log(`[사용자 목록] 업데이트: ${users.length}명 - ${users.join(', ')}`);
+            
+            usersList.innerHTML = '';
+            onlineCount.textContent = users.length;
+
+            if (users.length === 0) {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.style.padding = '20px';
+                emptyMsg.style.color = '#72767d';
+                emptyMsg.style.fontSize = '0.85em';
+                emptyMsg.style.textAlign = 'center';
+                emptyMsg.textContent = '온라인 사용자 없음';
+                usersList.appendChild(emptyMsg);
+                return;
+            }
+
+            users.forEach((user, index) => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-item';
+                userDiv.innerHTML = `
+                    <div class="user-status"></div>
+                    <span>${escapeHtml(user)}</span>
+                `;
+                usersList.appendChild(userDiv);
+            });
+        }
+
+        // Bảo vệ chống XSS: Thoát các ký tự đặc biệt HTML
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, (m) => map[m]);
+        }
+
+        function send() {
+            const nickname = nickInput.value.trim() || 'Ẩn danh';
+            const message = msgInput.value.trim();
+            
+            if (message) {
+                localStorage.setItem('chatNickname', nickname);
+                
+                console.log(`📤 메시지 전송: ${nickname} - ${message.substring(0, 20)}`);
+                
+                socket.emit('message', { name: nickname, msg: message });
+                msgInput.value = '';
+                msgInput.focus();
+            } else {
+                msgInput.focus();
+            }
+        }
+
+        // Hỗ trợ phím Enter
+        msgInput.addEventListener('keypress', (e) => { 
+            if (e.key === 'Enter') send(); 
+        });
+    </script>
+</body>
+</html>
