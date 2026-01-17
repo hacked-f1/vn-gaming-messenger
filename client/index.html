@@ -2,116 +2,73 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VOID ULTIMATE MESSENGER</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        :root { --void: #a020f0; --void-dark: #7b1fa2; --bg: #0d0d0f; --panel: #16161a; --text: #eee; --radius: 18px; }
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Pretendard', -apple-system, sans-serif; }
-        body { background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+        :root { --void: #a020f0; --bg: #0d0d0f; --panel: #16161a; --text: #eee; --radius: 18px; }
+        /* 라이트 테마 설정 */
+        body.light-mode { --bg: #f0f2f5; --panel: #ffffff; --text: #1c1e21; }
+        body.light-mode .bubble { background: #e4e6eb; color: #050505; }
+        body.light-mode #messages { background: #f0f2f5; }
 
-        /* Sidebar - Server & User List */
-        #sidebar { width: 300px; background: var(--panel); border-right: 1px solid #252525; display: flex; flex-direction: column; }
-        .side-header { padding: 30px 25px; font-size: 1.5rem; font-weight: 900; color: var(--void); letter-spacing: -1px; }
-        .room-btn { padding: 15px 25px; cursor: pointer; transition: 0.3s; opacity: 0.6; display: flex; align-items: center; gap: 10px; }
-        .room-btn:hover { background: rgba(160, 32, 240, 0.1); opacity: 1; }
-        .room-btn.active { background: var(--void); color: white; opacity: 1; font-weight: bold; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; height: 100vh; transition: 0.3s; }
 
-        /* Main Chat Window */
-        #chat-window { flex: 1; display: flex; flex-direction: column; position: relative; background: radial-gradient(circle at top right, #1a1a20, #0d0d0f); }
-        #chat-header { padding: 15px 25px; background: rgba(22, 22, 26, 0.8); backdrop-filter: blur(10px); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #252525; }
+        #sidebar { width: 260px; background: var(--panel); border-right: 1px solid #333; display:flex; flex-direction:column; }
+        #chat-window { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
         
-        /* Message Area */
-        #messages { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
-        .msg-row { display: flex; gap: 15px; width: 100%; align-items: flex-start; animation: fadeInUp 0.3s ease; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* 채팅창 영역 */
+        #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
         
-        .user-pic { width: 45px; height: 45px; border-radius: 50%; border: 2px solid #333; object-fit: cover; }
-        .bubble-wrap { max-width: 70%; }
-        .sender-name { font-size: 0.8rem; font-weight: 700; color: #aaa; margin-bottom: 5px; }
-        .bubble { padding: 12px 18px; border-radius: 0 var(--radius) var(--radius) var(--radius); background: var(--panel); line-height: 1.6; border: 1px solid #252525; position: relative; }
+        /* 입력 중 알림 영역 (메시지와 분리됨) */
+        #typing-display { height: 25px; padding-left: 20px; color: var(--void); font-size: 0.8rem; font-style: italic; font-weight: bold; }
+
+        /* 메시지 스타일 */
+        .msg-row { display: flex; gap: 10px; margin-bottom: 5px; align-items: flex-start; }
+        .is-mine { flex-direction: row-reverse; }
+        .bubble { padding: 10px 15px; border-radius: var(--radius); background: #222; max-width: 60%; word-break: break-all; }
+        .is-mine .bubble { background: var(--void); color: white; }
         
-        /* Mine Style */
-        .is-mine { align-self: flex-start; } 
-        .is-mine .bubble { background: var(--void); border-color: var(--void-dark); color: white; }
-        .is-mine .user-pic { border-color: var(--void); }
+        .msg-info { font-size: 0.7rem; color: #888; margin-top: 3px; display: flex; gap: 5px; }
+        .read-status { color: var(--void); font-weight: bold; }
 
-        .msg-meta { font-size: 0.7rem; color: #555; margin-top: 6px; display: flex; align-items: center; gap: 10px; }
-        .read-count { color: var(--void); font-weight: 800; }
-        .is-mine .read-count { color: #d199ff; }
-        .del-action { cursor: pointer; color: #ff5252; opacity: 0; transition: 0.2s; }
-        .msg-row:hover .del-action { opacity: 1; }
-
-        /* Controls */
-        #typing-indicator { height: 25px; padding-left: 90px; font-size: 0.8rem; color: var(--void); font-style: italic; }
-        #input-panel { padding: 25px; background: var(--panel); border-top: 1px solid #252525; display: flex; gap: 15px; align-items: center; }
-        #msg-input { flex: 1; padding: 15px 20px; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; outline: none; }
-        .btn { border: none; padding: 12px 25px; border-radius: 12px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-send { background: var(--void); color: white; }
-        .btn-call { background: #2ecc71; color: white; }
-
-        /* Video Call Overlay */
-        #call-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:9999; }
-        .video-grid { display: flex; gap: 20px; margin-bottom: 30px; width: 90%; justify-content: center; }
-        video { width: 45%; border-radius: 20px; border: 2px solid var(--void); box-shadow: 0 0 30px rgba(160, 32, 240, 0.3); }
-
-        /* Search & Toggle */
-        .search-bar { padding: 10px 20px; background: #000; border-bottom: 1px solid #222; display: flex; gap: 10px; }
-        .search-bar input { background: transparent; border: none; color: #fff; flex: 1; outline: none; }
+        /* 컨트롤 패널 */
+        #input-panel { padding: 20px; background: var(--panel); display: flex; gap: 10px; align-items: center; }
+        input { flex:1; padding: 12px; border-radius: 10px; border: 1px solid #444; background: #000; color: #fff; }
+        .btn { padding: 10px 15px; border-radius: 8px; border:none; cursor:pointer; font-weight:bold; }
+        .btn-void { background: var(--void); color: white; }
     </style>
 </head>
 <body>
 
     <nav id="sidebar">
-        <div class="side-header">VOID PRO</div>
-        <div id="room-container" style="flex:1;"></div>
-        <div style="padding: 20px; border-top: 1px solid #222;">
-            <div style="font-size: 0.7rem; color: #555; margin-bottom: 10px;">ONLINE USERS</div>
-            <div id="online-list" style="font-size: 0.85rem; color: #888;"></div>
-        </div>
+        <div style="padding:20px; font-weight:bold; font-size:1.2rem; color:var(--void);">VOID PRO</div>
+        <div id="room-list" style="flex:1;"></div>
     </nav>
 
     <main id="chat-window">
-        <header id="chat-header">
-            <div>
-                <h2 id="current-room-name"># GLOBAL_LOBBY</h2>
-                <p id="room-desc" style="font-size:0.7rem; color:#666;">Standard encrypted channel</p>
-            </div>
-            <div style="display:flex; gap:12px;">
-                <select id="lang-set" style="background:#222; color:#fff; border:none; border-radius:5px; padding:5px;">
-                    <option value="ko">KR</option><option value="en">EN</option><option value="vi">VI</option>
+        <header style="padding:15px; background:var(--panel); display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333;">
+            <h3 id="head-title"># LOBBY</h3>
+            <div style="display:flex; gap:8px;">
+                <select id="lang-select" onchange="updateLanguage()">
+                    <option value="ko">한국어</option>
+                    <option value="en">English</option>
+                    <option value="vi">Tiếng Việt</option>
                 </select>
-                <button class="btn btn-call" onclick="initiateCall()">📞 CALL</button>
-                <button class="btn" style="background:#333; color:white;" onclick="toggleTheme()">🌗</button>
-                <button class="btn btn-send" id="auth-btn" onclick="authAction()">LOGIN</button>
+                <button class="btn" onclick="toggleTheme()" id="theme-btn">🌗 Theme</button>
+                <button class="btn btn-void" onclick="authAction()" id="auth-btn">LOGIN</button>
             </div>
         </header>
 
-        <div class="search-bar">
-            <span>🔍</span>
-            <input type="text" id="search-input" placeholder="Search in this channel..." oninput="searchMessages()">
-        </div>
-
         <div id="messages"></div>
-        <div id="typing-indicator"></div>
+        <div id="typing-display"></div>
 
         <div id="input-panel">
-            <label style="cursor:pointer; font-size:1.5rem;">📎<input type="file" id="f-upload" hidden></label>
-            <input type="text" id="msg-input" placeholder="Enter secure message..." onkeypress="handleTyping(event)">
-            <label style="font-size:0.7rem; color:#555;"><input type="checkbox" id="expiring-mode"> 10s Vanish</label>
-            <button class="btn btn-send" onclick="sendMessage()">SEND</button>
+            <input type="text" id="msg-input" placeholder="메시지를 입력하세요..." oninput="emitTyping()" onkeypress="if(event.key==='Enter') sendMsg()">
+            <button class="btn btn-void" onclick="sendMsg()" id="send-btn">전송</button>
         </div>
     </main>
-
-    <div id="call-overlay">
-        <h1 style="color:var(--void); margin-bottom:20px;">Secure Call Active</h1>
-        <div class="video-grid">
-            <video id="remote-v" autoplay></video>
-            <video id="local-v" autoplay muted style="width:200px;"></video>
-        </div>
-        <button class="btn" style="background:#e74c3c; color:white; padding:15px 50px;" onclick="location.reload()">TERMINATE CALL</button>
-    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
@@ -126,148 +83,90 @@
         appId: "1:561627453007:web:71e824bc094a132ea97c3a"
     };
 
-    const fbApp = initializeApp(firebaseConfig);
-    const auth = getAuth(fbApp);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
     const socket = io();
-    const peer = new Peer();
 
-    let myProfile = { name: 'Guest', pic: 'https://api.dicebear.com/7.x/pixel-art/svg?seed=void', peerId: '' };
+    let myInfo = { name: 'Guest', pic: '' };
     let typingTimer;
 
-    // [PeerJS 초기화]
-    peer.on('open', id => myProfile.peerId = id);
+    // [1] 다국어 데이터
+    const i18n = {
+        ko: { send: "전송", placeholder: "메시지 입력...", login: "로그인", logout: "로그아웃" },
+        en: { send: "Send", placeholder: "Type a message...", login: "Login", logout: "Logout" },
+        vi: { send: "Gửi", placeholder: "Nhập tin nhắn...", login: "Đăng nhập", logout: "Đăng xuất" }
+    };
 
-    // [Firebase 인증]
-    window.authAction = () => auth.currentUser ? signOut(auth).then(()=>location.reload()) : signInWithPopup(auth, provider);
-    
-    onAuthStateChanged(auth, user => {
-        if (user) {
-            myProfile.name = user.displayName;
-            myProfile.pic = user.photoURL;
-            document.getElementById('auth-btn').innerText = 'LOGOUT';
-            socket.emit('auth', myProfile);
-        }
-    });
+    window.updateLanguage = () => {
+        const lang = document.getElementById('lang-select').value;
+        document.getElementById('send-btn').innerText = i18n[lang].send;
+        document.getElementById('msg-input').placeholder = i18n[lang].placeholder;
+        document.getElementById('auth-btn').innerText = auth.currentUser ? i18n[lang].logout : i18n[lang].login;
+    };
 
-    // [메시지 전송 로직]
-    window.handleTyping = (e) => {
-        if(e.key === 'Enter') sendMessage();
+    // [2] 테마 토글 함수 (확실하게 수정)
+    window.toggleTheme = () => {
+        document.body.classList.toggle('light-mode');
+        console.log("테마 변경됨");
+    };
+
+    // [3] 입력 중 상태 전송
+    window.emitTyping = () => {
         socket.emit('typing', true);
         clearTimeout(typingTimer);
         typingTimer = setTimeout(() => socket.emit('typing', false), 2000);
     };
 
-    window.sendMessage = () => {
-        const input = document.getElementById('msg-input');
-        const vanish = document.getElementById('expiring-mode').checked;
-        if(!input.value.trim()) return;
+    // [4] 로그인/로그아웃
+    window.authAction = () => {
+        if(auth.currentUser) signOut(auth).then(()=>location.reload());
+        else signInWithPopup(auth, provider);
+    };
 
-        socket.emit('message', { 
-            msg: input.value, 
-            isExpiring: vanish 
-        });
+    onAuthStateChanged(auth, user => {
+        if (user) {
+            myInfo = { name: user.displayName, pic: user.photoURL };
+            socket.emit('auth', myInfo);
+            updateLanguage();
+        }
+    });
+
+    // [5] 메시지 전송
+    window.sendMsg = () => {
+        const input = document.getElementById('msg-input');
+        if(!input.value.trim()) return;
+        socket.emit('message', { msg: input.value });
         input.value = '';
         socket.emit('typing', false);
     };
 
-    // [메시지 렌더링]
-    socket.on('message', data => renderMsg(data));
-    socket.on('chat-history', msgs => {
-        document.getElementById('messages').innerHTML = '';
-        msgs.forEach(renderMsg);
-    });
-
-    function renderMsg(data) {
-        const isMe = data.senderId === socket.id;
-        const msgList = document.getElementById('messages');
+    // [6] 실시간 수신 로직
+    socket.on('message', data => {
+        const isMine = data.senderId === socket.id;
+        const msgArea = document.getElementById('messages');
         const div = document.createElement('div');
-        div.className = `msg-row ${isMe ? 'is-mine' : ''}`;
-        div.id = data.id;
-
+        div.className = `msg-row ${isMine ? 'is-mine' : ''}`;
         div.innerHTML = `
-            <img src="${data.pic}" class="user-pic">
-            <div class="bubble-wrap">
-                <div class="sender-name">${data.name} ${data.isExpiring ? '⏳' : ''}</div>
-                <div class="bubble">${data.msg}</div>
-                <div class="msg-meta">
-                    <span class="read-count">1</span>
-                    <span>${data.timestamp}</span>
-                    ${isMe ? `<span class="del-action" onclick="deleteReq('${data.id}')">Delete</span>` : ''}
-                </div>
+            <div class="bubble">${data.msg}</div>
+            <div class="msg-info">
+                <span class="read-status">1</span> 
+                <span>${data.timestamp}</span>
             </div>
         `;
-        msgList.appendChild(div);
-        msgList.scrollTop = msgList.scrollHeight;
-    }
-
-    // [메시지 삭제 및 검색]
-    window.deleteReq = (id) => {
-        if(confirm("Permanently delete this message?")) socket.emit('delete-msg', id);
-    };
-    socket.on('msg-deleted', id => document.getElementById(id)?.remove());
-
-    window.searchMessages = () => {
-        const kw = document.getElementById('search-input').value;
-        if(kw.length > 1) socket.emit('search-msg', kw);
-    };
-    socket.on('search-results', results => {
-        console.log("Found:", results); // UI에 검색 결과 하이라이트 로직 추가 가능
+        msgArea.appendChild(div);
+        msgArea.scrollTop = msgArea.scrollHeight;
     });
 
-    // [입력 중 수신]
+    // 입력 중 수신 (채팅창 안올라오게 분리된 공간에 표시)
     socket.on('display-typing', data => {
-        document.getElementById('typing-indicator').innerText = data.isTyping ? `${data.name} is typing...` : '';
+        const display = document.getElementById('typing-display');
+        display.innerText = data.isTyping ? `${data.name}님이 입력 중...` : '';
     });
 
-    // [영상통화 로직]
-    window.initiateCall = () => {
-        if(!confirm("Start group call for this room?")) return;
-        socket.emit('call-request', { peerId: myProfile.peerId });
-        openCallOverlay();
-    };
-
-    socket.on('incoming-call', data => {
-        if(confirm(`Incoming call from ${data.fromName}. Accept?`)) {
-            openCallOverlay();
-            navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(stream => {
-                document.getElementById('local-v').srcObject = stream;
-                const call = peer.call(data.peerId, stream);
-                call.on('stream', remStream => document.getElementById('remote-v').srcObject = remStream);
-            });
-        }
-    });
-
-    peer.on('call', call => {
-        navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(stream => {
-            call.answer(stream);
-            call.on('stream', remStream => document.getElementById('remote-v').srcObject = remStream);
-        });
-    });
-
-    function openCallOverlay() {
-        document.getElementById('call-overlay').style.display = 'flex';
-        navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(s => document.getElementById('local-v').srcObject = s);
-    }
-
-    // [방 관리 초기화]
     socket.on('init-info', data => {
-        const container = document.getElementById('room-container');
-        container.innerHTML = data.rooms.map(r => `
-            <div class="room-btn" onclick="changeRoom('${r}', this)"># ${r}</div>
-        `).join('');
-        data.history.forEach(renderMsg);
-    });
-
-    window.changeRoom = (name, el) => {
-        document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('current-room-name').innerText = '# ' + name;
-        socket.emit('join-room', name);
-    };
-
-    socket.on('user-update', users => {
-        document.getElementById('online-list').innerHTML = users.map(u => `<div>● ${u.name}</div>`).join('');
+        const list = document.getElementById('room-list');
+        list.innerHTML = data.rooms.map(r => `<div style="padding:15px; cursor:pointer; border-bottom:1px solid #333;" onclick="socket.emit('join-room', '${r}')"># ${r}</div>`).join('');
     });
 </script>
 </body>
