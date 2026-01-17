@@ -72,9 +72,9 @@
   <script src="/socket.io/socket.io.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+    import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
-    // [민석님 확인!] Firebase 정보를 본인의 콘솔 내용으로 채워주세요
+    // [중요] 민석님의 Firebase 설정을 여기에 붙여넣으세요!
     const firebaseConfig = {
       apiKey: "AIzaSy...", 
       authDomain: "vn-gaming-messenger.firebaseapp.com",
@@ -85,32 +85,33 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
 
     const socket = io();
     window.userName = "익명 게이머";
 
-    // 로그인 버튼 클릭
+    // 1. 리다이렉트 로그인 시작
     const loginBtn = document.getElementById('login-btn');
-    loginBtn.addEventListener('click', async () => {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        console.error("로그인 에러:", error);
-      }
+    loginBtn.addEventListener('click', () => {
+      signInWithRedirect(auth, provider);
     });
 
-    // 인증 상태 감시 (팝업 닫힌 후 처리)
+    // 2. 리다이렉트 결과 처리 (로그인하고 돌아왔을 때)
+    getRedirectResult(auth).catch((error) => {
+      console.error("리다이렉트 로그인 에러:", error);
+    });
+
+    // 3. 인증 상태 감시 (모든 로그인 방식 공통)
     onAuthStateChanged(auth, (user) => {
       if (user) {
         window.userName = user.displayName;
         document.getElementById('status').innerText = `상태: ${window.userName}님 접속 중`;
         loginBtn.style.display = 'none';
+        // 서버에 입장 알림
         socket.emit('message', { name: '시스템', msg: `${window.userName}님이 입장하셨습니다.` });
       }
     });
 
-    // 메시지 전송
+    // 4. 메시지 전송
     window.send = function() {
       const msgInput = document.getElementById('message');
       const text = msgInput.value.trim();
@@ -123,7 +124,7 @@
       }
     };
 
-    // 메시지 수신
+    // 5. 메시지 수신
     socket.on('message', (data) => {
       const container = document.getElementById('chat-container');
       const div = document.createElement('div');
@@ -135,13 +136,13 @@
       container.scrollTop = container.scrollHeight;
     });
 
-    // 유저 리스트 업데이트
+    // 6. 유저 리스트 업데이트
     socket.on('users-list', (list) => {
       document.getElementById('user-count').innerText = list.length;
       document.getElementById('users-list').innerHTML = list.map(u => `<div>• ${u}</div>`).join('');
     });
 
-    // 테마 전환
+    // 7. 테마 전환
     window.toggleTheme = function() {
       document.body.classList.toggle('light-theme');
     };
