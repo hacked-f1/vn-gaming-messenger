@@ -23,7 +23,6 @@ const io = new Server(server, {
 // ========================================
 // 📁 정적 파일 서비스
 // ========================================
-// server/index.js 기준으로 ../client 폴더를 정적 경로로 지정
 app.use(express.static(path.join(__dirname, '../client')));
 
 // 모든 라우트는 index.html 반환
@@ -59,13 +58,14 @@ io.on('connection', (socket) => {
       name: userName,
       msg: data.msg.trim(),
       timestamp: new Date().toLocaleTimeString('ko-KR'),
-      type: 'chat'
+      type: 'chat',
+      profilePic: data.profilePic || ""
     };
 
     messageHistory.push(messageData);
     if (messageHistory.length > MAX_HISTORY) messageHistory.shift();
 
-    io.emit('message', messageData);
+    io.emit('message', messageData); // 모든 클라이언트에게 전송
     io.emit('users-list', Array.from(users.values()));
   });
 
