@@ -2,73 +2,106 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>VOID ULTIMATE MESSENGER</title>
+    <title>VOID PREMIUM MESSENGER</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <style>
-        :root { --void: #a020f0; --bg: #0d0d0f; --panel: #16161a; --text: #eee; --radius: 18px; }
-        /* 라이트 테마 설정 */
-        body.light-mode { --bg: #f0f2f5; --panel: #ffffff; --text: #1c1e21; }
-        body.light-mode .bubble { background: #e4e6eb; color: #050505; }
-        body.light-mode #messages { background: #f0f2f5; }
+        :root { 
+            --void: #a020f0; --void-dark: #7b1fa2; --bg: #0d0d0f; --panel: #16161a; 
+            --text: #eee; --radius: 18px; --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        body.light-mode { --bg: #f5f7fb; --panel: #ffffff; --text: #1c1e21; }
 
-        * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
-        body { background: var(--bg); color: var(--text); display: flex; height: 100vh; transition: 0.3s; }
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Pretendard', sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; height: 100vh; transition: background 0.5s ease; }
 
-        #sidebar { width: 260px; background: var(--panel); border-right: 1px solid #333; display:flex; flex-direction:column; }
-        #chat-window { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+        /* 사이드바 */
+        #sidebar { width: 280px; background: var(--panel); border-right: 1px solid rgba(255,255,255,0.05); display:flex; flex-direction:column; }
         
-        /* 채팅창 영역 */
-        #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        
-        /* 입력 중 알림 영역 (메시지와 분리됨) */
-        #typing-display { height: 25px; padding-left: 20px; color: var(--void); font-size: 0.8rem; font-style: italic; font-weight: bold; }
+        /* 채팅창 레이아웃 */
+        #chat-window { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+        header { padding: 20px 25px; background: var(--panel); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); z-index: 10; }
 
-        /* 메시지 스타일 */
-        .msg-row { display: flex; gap: 10px; margin-bottom: 5px; align-items: flex-start; }
-        .is-mine { flex-direction: row-reverse; }
-        .bubble { padding: 10px 15px; border-radius: var(--radius); background: #222; max-width: 60%; word-break: break-all; }
-        .is-mine .bubble { background: var(--void); color: white; }
-        
-        .msg-info { font-size: 0.7rem; color: #888; margin-top: 3px; display: flex; gap: 5px; }
-        .read-status { color: var(--void); font-weight: bold; }
+        /* 메시지 애니메이션 및 정렬 */
+        #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .msg-row { display: flex; gap: 12px; align-items: flex-start; max-width: 80%; animation: popIn 0.4s var(--transition) forwards; }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
-        /* 컨트롤 패널 */
-        #input-panel { padding: 20px; background: var(--panel); display: flex; gap: 10px; align-items: center; }
-        input { flex:1; padding: 12px; border-radius: 10px; border: 1px solid #444; background: #000; color: #fff; }
-        .btn { padding: 10px 15px; border-radius: 8px; border:none; cursor:pointer; font-weight:bold; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #333; object-fit: cover; }
+        .bubble-wrap { display: flex; flex-direction: column; gap: 5px; }
+        .sender-name { font-size: 0.8rem; font-weight: 700; color: #888; }
+        
+        /* 말풍선 기본: 왼쪽 정렬 */
+        .bubble { 
+            padding: 12px 18px; border-radius: 0 var(--radius) var(--radius) var(--radius); 
+            background: var(--panel); border: 1px solid rgba(255,255,255,0.1); line-height: 1.6; 
+            position: relative; transition: var(--transition);
+        }
+
+        /* 내 메시지 강조 */
+        .is-mine .bubble { background: var(--void); color: white; border: none; box-shadow: 0 4px 15px rgba(160, 32, 240, 0.3); }
+        .is-mine .avatar { border-color: var(--void); }
+
+        /* 메시지 삭제/시간 정보 */
+        .msg-footer { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: #555; margin-top: 4px; }
+        .read-count { color: var(--void); font-weight: 800; }
+        .del-btn { color: #ff5252; cursor: pointer; opacity: 0; transition: 0.3s; }
+        .msg-row:hover .del-btn { opacity: 1; }
+
+        /* 입력 중 고정 표시 */
+        #typing-area { height: 25px; padding-left: 77px; font-size: 0.8rem; color: var(--void); font-style: italic; font-weight: 600; }
+
+        /* 입력 도구 */
+        #input-panel { padding: 25px; background: var(--panel); display: flex; gap: 15px; align-items: center; }
+        #msg-input { flex: 1; padding: 15px 20px; border-radius: 12px; border: 1px solid #333; background: rgba(0,0,0,0.3); color: #fff; outline: none; transition: 0.3s; }
+        #msg-input:focus { border-color: var(--void); }
+        .btn { border: none; padding: 12px 22px; border-radius: 10px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-void { background: var(--void); color: white; }
+        .btn-call { background: #2ecc71; color: white; }
+        
+        /* 영상통화 화면 */
+        #call-ui { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:9999; }
+        .v-grid { display: flex; gap: 20px; width: 80%; }
+        video { width: 50%; border-radius: 15px; background: #000; border: 2px solid var(--void); }
     </style>
 </head>
 <body>
 
     <nav id="sidebar">
-        <div style="padding:20px; font-weight:bold; font-size:1.2rem; color:var(--void);">VOID PRO</div>
-        <div id="room-list" style="flex:1;"></div>
+        <div style="padding:30px; font-size:1.5rem; font-weight:900; color:var(--void);">VOID PRO</div>
+        <div id="rooms" style="flex:1;"></div>
     </nav>
 
     <main id="chat-window">
-        <header style="padding:15px; background:var(--panel); display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333;">
-            <h3 id="head-title"># LOBBY</h3>
-            <div style="display:flex; gap:8px;">
-                <select id="lang-select" onchange="updateLanguage()">
-                    <option value="ko">한국어</option>
-                    <option value="en">English</option>
-                    <option value="vi">Tiếng Việt</option>
+        <header>
+            <h2 id="room-name"># LOBBY</h2>
+            <div style="display:flex; gap:10px;">
+                <select id="lang" onchange="applyLang()" style="background:#222; color:#fff; border:none; padding:5px 10px; border-radius:5px;">
+                    <option value="ko">KO</option><option value="en">EN</option><option value="vi">VI</option>
                 </select>
-                <button class="btn" onclick="toggleTheme()" id="theme-btn">🌗 Theme</button>
-                <button class="btn btn-void" onclick="authAction()" id="auth-btn">LOGIN</button>
+                <button class="btn btn-call" onclick="makeCall()">📞 CALL</button>
+                <button class="btn" onclick="toggleTheme()" style="background:#333; color:#fff;">🌗</button>
+                <button class="btn btn-void" onclick="auth()" id="auth-btn">LOGIN</button>
             </div>
         </header>
 
         <div id="messages"></div>
-        <div id="typing-display"></div>
+        <div id="typing-area"></div>
 
         <div id="input-panel">
-            <input type="text" id="msg-input" placeholder="메시지를 입력하세요..." oninput="emitTyping()" onkeypress="if(event.key==='Enter') sendMsg()">
-            <button class="btn btn-void" onclick="sendMsg()" id="send-btn">전송</button>
+            <input type="text" id="msg-input" placeholder="메시지를 입력하세요..." oninput="isTyping()" onkeypress="if(event.key==='Enter') send()">
+            <button class="btn btn-void" onclick="send()" id="send-txt">전송</button>
         </div>
     </main>
+
+    <div id="call-ui">
+        <div class="v-grid">
+            <video id="remote-v" autoplay playsinline></video>
+            <video id="local-v" autoplay muted playsinline style="width:200px;"></video>
+        </div>
+        <button class="btn" style="background:#ff5252; margin-top:30px;" onclick="location.reload()">END CALL</button>
+    </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
@@ -83,90 +116,104 @@
         appId: "1:561627453007:web:71e824bc094a132ea97c3a"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    const fb = initializeApp(firebaseConfig);
+    const authObj = getAuth(fb);
     const provider = new GoogleAuthProvider();
     const socket = io();
+    const peer = new Peer();
 
-    let myInfo = { name: 'Guest', pic: '' };
-    let typingTimer;
+    let my = { name: 'Guest', pic: 'https://api.dicebear.com/7.x/bottts/svg?seed=1', peerId: '' };
+    let tTimer;
 
-    // [1] 다국어 데이터
-    const i18n = {
-        ko: { send: "전송", placeholder: "메시지 입력...", login: "로그인", logout: "로그아웃" },
-        en: { send: "Send", placeholder: "Type a message...", login: "Login", logout: "Logout" },
-        vi: { send: "Gửi", placeholder: "Nhập tin nhắn...", login: "Đăng nhập", logout: "Đăng xuất" }
+    peer.on('open', id => my.peerId = id);
+
+    // [전화 기능 복구]
+    window.makeCall = () => {
+        document.getElementById('call-ui').style.display = 'flex';
+        navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(s => {
+            document.getElementById('local-v').srcObject = s;
+            socket.emit('call-request', { peerId: my.peerId });
+        });
     };
 
-    window.updateLanguage = () => {
-        const lang = document.getElementById('lang-select').value;
-        document.getElementById('send-btn').innerText = i18n[lang].send;
-        document.getElementById('msg-input').placeholder = i18n[lang].placeholder;
-        document.getElementById('auth-btn').innerText = auth.currentUser ? i18n[lang].logout : i18n[lang].login;
-    };
-
-    // [2] 테마 토글 함수 (확실하게 수정)
-    window.toggleTheme = () => {
-        document.body.classList.toggle('light-mode');
-        console.log("테마 변경됨");
-    };
-
-    // [3] 입력 중 상태 전송
-    window.emitTyping = () => {
-        socket.emit('typing', true);
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => socket.emit('typing', false), 2000);
-    };
-
-    // [4] 로그인/로그아웃
-    window.authAction = () => {
-        if(auth.currentUser) signOut(auth).then(()=>location.reload());
-        else signInWithPopup(auth, provider);
-    };
-
-    onAuthStateChanged(auth, user => {
-        if (user) {
-            myInfo = { name: user.displayName, pic: user.photoURL };
-            socket.emit('auth', myInfo);
-            updateLanguage();
+    socket.on('incoming-call', d => {
+        if(confirm("영상통화 요청이 왔습니다. 받으시겠습니까?")) {
+            document.getElementById('call-ui').style.display = 'flex';
+            navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(s => {
+                document.getElementById('local-v').srcObject = s;
+                const call = peer.call(d.peerId, s);
+                call.on('stream', rs => document.getElementById('remote-v').srcObject = rs);
+            });
         }
     });
 
-    // [5] 메시지 전송
-    window.sendMsg = () => {
-        const input = document.getElementById('msg-input');
-        if(!input.value.trim()) return;
-        socket.emit('message', { msg: input.value });
-        input.value = '';
+    peer.on('call', call => {
+        navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(s => {
+            call.answer(s);
+            call.on('stream', rs => document.getElementById('remote-v').srcObject = rs);
+        });
+    });
+
+    // [로그인 및 테마]
+    window.auth = () => authObj.currentUser ? signOut(authObj).then(()=>location.reload()) : signInWithPopup(authObj, provider);
+    window.toggleTheme = () => document.body.classList.toggle('light-mode');
+    
+    onAuthStateChanged(authObj, u => {
+        if(u) {
+            my.name = u.displayName; my.pic = u.photoURL;
+            socket.emit('auth', my);
+            document.getElementById('auth-btn').innerText = 'LOGOUT';
+        }
+    });
+
+    // [메시지 전송 및 삭제]
+    window.send = () => {
+        const el = document.getElementById('msg-input');
+        if(!el.value.trim()) return;
+        socket.emit('message', { msg: el.value });
+        el.value = '';
         socket.emit('typing', false);
     };
 
-    // [6] 실시간 수신 로직
-    socket.on('message', data => {
-        const isMine = data.senderId === socket.id;
-        const msgArea = document.getElementById('messages');
+    window.isTyping = () => {
+        socket.emit('typing', true);
+        clearTimeout(tTimer);
+        tTimer = setTimeout(() => socket.emit('typing', false), 2000);
+    };
+
+    window.delMsg = (id) => socket.emit('delete-msg', id);
+
+    socket.on('message', d => render(d));
+    socket.on('msg-deleted', id => document.getElementById(id)?.remove());
+    socket.on('display-typing', d => {
+        document.getElementById('typing-area').innerText = d.isTyping ? `${d.name}님이 입력 중...` : '';
+    });
+
+    function render(d) {
+        const isMe = d.senderId === socket.id;
+        const area = document.getElementById('messages');
         const div = document.createElement('div');
-        div.className = `msg-row ${isMine ? 'is-mine' : ''}`;
+        div.className = `msg-row ${isMe ? 'is-mine' : ''}`;
+        div.id = d.id;
         div.innerHTML = `
-            <div class="bubble">${data.msg}</div>
-            <div class="msg-info">
-                <span class="read-status">1</span> 
-                <span>${data.timestamp}</span>
+            <img src="${d.pic || my.pic}" class="avatar">
+            <div class="bubble-wrap">
+                <div class="sender-name">${d.name}</div>
+                <div class="bubble">${d.msg}</div>
+                <div class="msg-footer">
+                    <span class="read-count">1</span>
+                    <span>${d.timestamp}</span>
+                    ${isMe ? `<span class="del-btn" onclick="delMsg('${d.id}')">삭제</span>` : ''}
+                </div>
             </div>
         `;
-        msgArea.appendChild(div);
-        msgArea.scrollTop = msgArea.scrollHeight;
-    });
+        area.appendChild(div);
+        area.scrollTop = area.scrollHeight;
+    }
 
-    // 입력 중 수신 (채팅창 안올라오게 분리된 공간에 표시)
-    socket.on('display-typing', data => {
-        const display = document.getElementById('typing-display');
-        display.innerText = data.isTyping ? `${data.name}님이 입력 중...` : '';
-    });
-
-    socket.on('init-info', data => {
-        const list = document.getElementById('room-list');
-        list.innerHTML = data.rooms.map(r => `<div style="padding:15px; cursor:pointer; border-bottom:1px solid #333;" onclick="socket.emit('join-room', '${r}')"># ${r}</div>`).join('');
+    // [방 관리]
+    socket.on('init-info', d => {
+        document.getElementById('rooms').innerHTML = d.rooms.map(r => `<div style="padding:15px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05);" onclick="socket.emit('join-room','${r}')"># ${r}</div>`).join('');
     });
 </script>
 </body>
