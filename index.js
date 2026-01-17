@@ -23,6 +23,19 @@ const io = new Server(server, {
 // 📁 정적 파일 서비스 (HTML, CSS, JS)
 // ========================================
 app.use(express.static(path.join(__dirname, '../client')));
+app.use(express.static(__dirname));
+
+// ========================================
+// 🌐 Express 라우팅 (React/SPA 대응)
+// ========================================
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
+});
+
+// 모든 요청을 index.html로 리다이렉트 (SPA 대응)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../client/index.html'));
+});
 
 // ========================================
 // 📊 데이터 저장소
