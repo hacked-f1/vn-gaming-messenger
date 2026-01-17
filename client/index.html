@@ -2,43 +2,41 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LIGHT / VOID PREMIUM</title>
+    <title>LIGHT / VOID MULTI-LANG</title>
     <style>
         :root { --void: #a020f0; --light: #00aff4; --bg: #0b0b0d; --panel: #151518; --radius: 18px; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', sans-serif; }
-        body { background: var(--bg); color: #fff; display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', sans-serif; transition: 0.3s; }
+        body { background: var(--bg); color: #fff; display: flex; height: 100vh; overflow: hidden; }
         body.light-theme { --bg: #f0f2f5; --panel: #ffffff; color: #222; }
 
-        /* 사이드바 */
+        /* 사이드바 및 채널 선택 효과 */
         #sidebar { width: 260px; background: var(--panel); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; padding: 20px; }
-        .server-item { padding: 15px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; border: 1px solid transparent; opacity: 0.6; }
-        .server-item.active { background: rgba(160,32,240,0.1); border-color: var(--void); color: var(--void); opacity: 1; font-weight: bold; }
-        body.light-theme .server-item.active { background: #e1f5fe; border-color: var(--light); color: var(--light); }
+        .server-item { padding: 15px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; opacity: 0.5; border: 1px solid transparent; }
+        .server-item.active { background: var(--void); color: #fff !important; opacity: 1; font-weight: bold; box-shadow: 0 5px 15px rgba(160,32,240,0.4); }
+        body.light-theme .server-item.active { background: var(--light); }
 
-        /* 메인 채팅 */
+        /* 대화창 정렬 */
         #main-chat { flex: 1; display: flex; flex-direction: column; }
         #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
         
-        .msg-box { display: flex; gap: 12px; animation: slideIn 0.3s ease-out forwards; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-box { display: flex; gap: 12px; align-self: flex-start; position: relative; width: fit-content; max-width: 80%; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
         
-        .bubble { background: var(--panel); padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) var(--radius); max-width: 70%; line-height: 1.5; }
-        .my-msg { flex-direction: row-reverse; }
-        .my-msg .bubble { background: var(--void); color: #fff; border-radius: var(--radius) 0 var(--radius) var(--radius); }
-        body.light-theme .my-msg .bubble { background: var(--light); }
+        .bubble { background: var(--panel); padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) var(--radius); line-height: 1.5; border: 1px solid rgba(255,255,255,0.03); }
+        body.light-theme .bubble { border: 1px solid #ddd; }
 
-        /* 입력바 */
+        /* 삭제 버튼 디자인 */
+        .del-btn { opacity: 0; color: #ff4d4d; cursor: pointer; font-size: 0.8rem; margin-left: 10px; align-self: center; }
+        .msg-box:hover .del-btn { opacity: 1; }
+
+        /* 입력창 및 레이아웃 */
         #input-area { padding: 20px; background: var(--panel); display: flex; gap: 10px; align-items: center; }
         input[type="text"] { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; outline: none; }
-        body.light-theme input[type="text"] { background: #f5f5f5; color: #222; border-color: #ddd; }
-        
-        .btn { padding: 12px 20px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; }
+        .btn { padding: 10px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
         .btn-send { background: var(--void); color: #fff; }
 
-        /* 온라인 목록 */
-        #online-list { width: 200px; background: var(--panel); border-left: 1px solid rgba(255,255,255,0.05); padding: 20px; }
-        .user-item { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 0.9em; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        #online-list { width: 220px; background: var(--panel); border-left: 1px solid rgba(255,255,255,0.05); padding: 20px; }
+        .avatar { width: 35px; height: 35px; border-radius: 50%; }
     </style>
 </head>
 <body>
@@ -46,28 +44,33 @@
 <div id="sidebar">
     <h2 id="logo" style="margin-bottom: 25px; font-style: italic;">VOID SYSTEM</h2>
     <div id="server-list" style="flex: 1; overflow-y: auto;"></div>
-    <button onclick="addServer()" style="background:none; border: 1px dashed #444; color:#666; padding:10px; border-radius:10px; cursor:pointer;">+ CREATE NODE</button>
+    <button onclick="addServer()" id="ui-create" class="btn" style="background:#222; color:#888; margin-top:10px;">+ CREATE NODE</button>
 </div>
 
 <div id="main-chat">
     <div style="padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
         <div id="room-title" style="font-weight: bold;"># GLOBAL_LOBBY</div>
-        <div style="display: flex; gap: 10px;">
-            <button onclick="document.body.classList.toggle('light-theme')" class="btn" style="background:#222; color:#fff; font-size:0.7em;">THEME</button>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <select id="lang-select" onchange="changeLang()">
+                <option value="ko">한국어</option>
+                <option value="en">English</option>
+                <option value="vi">Tiếng Việt</option>
+            </select>
+            <button onclick="document.body.classList.toggle('light-theme')" class="btn" style="background:#222; color:#fff; font-size:0.7rem;">THEME</button>
             <button id="auth-btn" onclick="handleAuth()" class="btn-send btn">LOGIN</button>
         </div>
     </div>
     <div id="messages"></div>
     <div id="input-area">
-        <label for="file-input" style="cursor:pointer; font-size: 1.5rem;">🖼️</label>
+        <label for="file-input" style="cursor:pointer; font-size: 1.2rem;">🖼️</label>
         <input type="file" id="file-input" style="display:none" accept="image/*">
         <input type="text" id="msg-input" placeholder="메시지 전송..." onkeypress="if(event.keyCode==13) sendMsg()">
-        <button class="btn btn-send" onclick="sendMsg()">SEND</button>
+        <button id="ui-send" class="btn btn-send" onclick="sendMsg()">SEND</button>
     </div>
 </div>
 
 <div id="online-list">
-    <div style="font-size: 0.8em; color: #555; margin-bottom: 15px;">ONLINE USERS</div>
+    <div id="ui-online" style="font-size: 0.8em; color: #555; margin-bottom: 15px;">ONLINE USERS</div>
     <div id="users-box"></div>
 </div>
 
@@ -91,8 +94,23 @@
     const socket = io();
 
     let myInfo = { name: "익명", pic: `https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`, server: "GLOBAL_LOBBY" };
+    
+    // 다국어 데이터
+    const i18n = {
+        ko: { create: "+ 서버 생성", send: "전송", online: "접속 유저", placeholder: "메시지 전송...", login: "로그인", logout: "로그아웃" },
+        en: { create: "+ Create Node", send: "Send", online: "Online Users", placeholder: "Type message...", login: "Login", logout: "Logout" },
+        vi: { create: "+ Tạo máy chủ", send: "Gửi", online: "Người dùng", placeholder: "Nhập tin nhắn...", login: "Đăng nhập", logout: "Đăng xuất" }
+    };
 
-    // 인증
+    window.changeLang = () => {
+        const l = document.getElementById('lang-select').value;
+        document.getElementById('ui-create').innerText = i18n[l].create;
+        document.getElementById('ui-send').innerText = i18n[l].send;
+        document.getElementById('ui-online').innerText = i18n[l].online;
+        document.getElementById('msg-input').placeholder = i18n[l].placeholder;
+        document.getElementById('auth-btn').innerText = auth.currentUser ? i18n[l].logout : i18n[l].login;
+    };
+
     window.handleAuth = () => {
         if(auth.currentUser) signOut(auth).then(() => location.reload());
         else signInWithPopup(auth, provider);
@@ -102,12 +120,11 @@
         if (user) {
             myInfo.name = user.displayName;
             myInfo.pic = user.photoURL;
-            document.getElementById('auth-btn').innerText = "LOGOUT";
+            changeLang();
             socket.emit('join-server', myInfo);
         }
     });
 
-    // 서버 관리
     window.addServer = () => {
         const s = prompt("서버 이름을 입력하세요:");
         if(s) socket.emit('create-server', s.toUpperCase());
@@ -125,7 +142,6 @@
         socket.emit('join-server', myInfo);
     };
 
-    // 메시지
     window.sendMsg = () => {
         const input = document.getElementById('msg-input');
         if(input.value.trim()) {
@@ -134,38 +150,48 @@
         }
     };
 
-    // 이미지 파일 처리
     document.getElementById('file-input').onchange = function(e) {
         const file = e.target.files[0];
         const reader = new FileReader();
-        reader.onload = () => socket.emit('message', { msg: "이미지를 보냈습니다.", file: reader.result });
+        reader.onload = () => socket.emit('message', { msg: "Sent an image", file: reader.result });
         reader.readAsDataURL(file);
     };
 
-    socket.on('message', (data) => renderMsg(data));
+    socket.on('message', renderMsg);
     socket.on('chat-history', (history) => history.forEach(renderMsg));
+    
+    // 삭제 반영
+    socket.on('msg-deleted', (id) => {
+        const el = document.getElementById(`msg-${id}`);
+        if(el) el.remove();
+    });
 
     function renderMsg(data) {
         const box = document.getElementById('messages');
-        const isMe = data.name === myInfo.name;
         const div = document.createElement('div');
-        div.className = `msg-box ${isMe ? 'my-msg' : ''}`;
+        div.className = 'msg-box';
+        div.id = `msg-${data.id}`;
         div.innerHTML = `
             <img src="${data.pic}" class="avatar">
             <div class="bubble">
                 <div style="font-size:0.7em; opacity:0.6; margin-bottom:4px;">${data.name}</div>
-                ${data.file ? `<img src="${data.file}" style="max-width:100%; border-radius:10px; margin-bottom:5px;"><br>` : ''}
+                ${data.file ? `<img src="${data.file}" style="max-width:100%; border-radius:10px;"><br>` : ''}
                 ${data.msg}
-                <div style="font-size:0.6em; opacity:0.4; text-align:right; margin-top:4px;">${data.timestamp}</div>
+                <div style="font-size:0.6em; opacity:0.4; margin-top:4px;">${data.timestamp}</div>
             </div>
+            ${data.name === myInfo.name ? `<span class="del-btn" onclick="deleteMsg('${data.id}')">[X]</span>` : ''}
         `;
         box.appendChild(div);
         box.scrollTop = box.scrollHeight;
     }
 
+    window.deleteMsg = (id) => socket.emit('delete-msg', id);
+
     socket.on('online-users', (users) => {
         document.getElementById('users-box').innerHTML = users.map(u => `
-            <div class="user-item"><img src="${u.pic}" class="avatar"> <span>${u.name}</span></div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                <img src="${u.pic}" class="avatar"> <span>${u.name}</span>
+            </div>
         `).join('');
     });
 </script>
