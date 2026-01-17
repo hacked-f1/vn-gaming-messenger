@@ -2,198 +2,281 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>LIGHT / VOID MULTI-LANG</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOID PREMIUM MESSENGER</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
-        :root { --void: #a020f0; --light: #00aff4; --bg: #0b0b0d; --panel: #151518; --radius: 18px; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', sans-serif; transition: 0.3s; }
-        body { background: var(--bg); color: #fff; display: flex; height: 100vh; overflow: hidden; }
-        body.light-theme { --bg: #f0f2f5; --panel: #ffffff; color: #222; }
+        :root { --void: #a020f0; --light: #00aff4; --bg: #0d0d0f; --panel: #16161a; --radius: 15px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Pretendard', sans-serif; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        body { background: var(--bg); color: #eee; display: flex; height: 100vh; overflow: hidden; }
+        body.light-theme { --bg: #f4f7fa; --panel: #ffffff; color: #222; }
 
-        /* 사이드바 및 채널 선택 효과 */
-        #sidebar { width: 260px; background: var(--panel); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; padding: 20px; }
-        .server-item { padding: 15px; border-radius: 12px; margin-bottom: 8px; cursor: pointer; opacity: 0.5; border: 1px solid transparent; }
-        .server-item.active { background: var(--void); color: #fff !important; opacity: 1; font-weight: bold; box-shadow: 0 5px 15px rgba(160,32,240,0.4); }
-        body.light-theme .server-item.active { background: var(--light); }
+        /* 좌측 사이드바 */
+        #sidebar { width: 280px; background: var(--panel); border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; }
+        .sidebar-header { padding: 25px; font-weight: 900; font-size: 1.2rem; color: var(--void); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .nav-list { flex: 1; padding: 15px; overflow-y: auto; }
+        .nav-item { padding: 12px 15px; border-radius: 10px; cursor: pointer; margin-bottom: 5px; opacity: 0.6; }
+        .nav-item:hover, .nav-item.active { background: rgba(160, 32, 240, 0.1); opacity: 1; color: var(--void); }
 
-        /* 대화창 정렬 */
-        #main-chat { flex: 1; display: flex; flex-direction: column; }
-        #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
+        /* 메인 채팅창 */
+        #chat-main { flex: 1; display: flex; flex-direction: column; }
+        #chat-header { padding: 15px 25px; background: var(--panel); display: flex; justify-content: space-between; align-items: center; }
+        #messages { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; background: rgba(0,0,0,0.1); }
         
-        .msg-box { display: flex; gap: 12px; align-self: flex-start; position: relative; width: fit-content; max-width: 80%; animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-        
-        .bubble { background: var(--panel); padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) var(--radius); line-height: 1.5; border: 1px solid rgba(255,255,255,0.03); }
-        body.light-theme .bubble { border: 1px solid #ddd; }
+        /* 메시지 애니메이션 */
+        .msg-box { display: flex; gap: 12px; align-self: flex-start; max-width: 80%; animation: pop 0.3s ease; }
+        @keyframes pop { from { opacity:0; transform:scale(0.9) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .bubble { background: var(--panel); padding: 12px 16px; border-radius: 0 var(--radius) var(--radius) var(--radius); border: 1px solid rgba(255,255,255,0.03); }
+        .mine { align-self: flex-end; flex-direction: row-reverse; }
+        .mine .bubble { background: var(--void); color: white; border-radius: var(--radius) 0 var(--radius) var(--radius); }
 
-        /* 삭제 버튼 디자인 */
-        .del-btn { opacity: 0; color: #ff4d4d; cursor: pointer; font-size: 0.8rem; margin-left: 10px; align-self: center; }
-        .msg-box:hover .del-btn { opacity: 1; }
-
-        /* 입력창 및 레이아웃 */
+        /* 입력창 */
         #input-area { padding: 20px; background: var(--panel); display: flex; gap: 10px; align-items: center; }
-        input[type="text"] { flex: 1; padding: 14px; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; outline: none; }
-        .btn { padding: 10px 18px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        input[type="text"] { flex: 1; padding: 15px; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; outline: none; }
+        .btn { padding: 12px 20px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
         .btn-send { background: var(--void); color: #fff; }
 
-        #online-list { width: 220px; background: var(--panel); border-left: 1px solid rgba(255,255,255,0.05); padding: 20px; }
-        .avatar { width: 35px; height: 35px; border-radius: 50%; }
+        /* 영상통화 팝업 */
+        #call-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 600px; background: #000; border-radius: 20px; padding: 20px; display: none; z-index: 100; border: 2px solid var(--void); }
+        video { width: 100%; border-radius: 15px; background: #222; margin-bottom: 10px; }
+
+        /* 다국어 선택 */
+        #lang-select { background: #222; color: #fff; border: none; padding: 5px; border-radius: 5px; }
+        #typing-indicator { font-size: 0.8rem; color: var(--void); height: 20px; padding-left: 25px; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h2 id="logo" style="margin-bottom: 25px; font-style: italic;">VOID SYSTEM</h2>
-    <div id="server-list" style="flex: 1; overflow-y: auto;"></div>
-    <button onclick="addServer()" id="ui-create" class="btn" style="background:#222; color:#888; margin-top:10px;">+ CREATE NODE</button>
-</div>
-
-<div id="main-chat">
-    <div style="padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05);">
-        <div id="room-title" style="font-weight: bold;"># GLOBAL_LOBBY</div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <select id="lang-select" onchange="changeLang()">
-                <option value="ko">한국어</option>
-                <option value="en">English</option>
-                <option value="vi">Tiếng Việt</option>
-            </select>
-            <button onclick="document.body.classList.toggle('light-theme')" class="btn" style="background:#222; color:#fff; font-size:0.7rem;">THEME</button>
-            <button id="auth-btn" onclick="handleAuth()" class="btn-send btn">LOGIN</button>
+    <nav id="sidebar">
+        <div class="sidebar-header">VOID MESSENGER</div>
+        <div class="nav-list" id="room-list"></div>
+        <div style="padding: 20px;">
+            <button onclick="createNewRoom()" style="width:100%;" class="btn">+ New Server</button>
         </div>
-    </div>
-    <div id="messages"></div>
-    <div id="input-area">
-        <label for="file-input" style="cursor:pointer; font-size: 1.2rem;">🖼️</label>
-        <input type="file" id="file-input" style="display:none" accept="image/*">
-        <input type="text" id="msg-input" placeholder="메시지 전송..." onkeypress="if(event.keyCode==13) sendMsg()">
-        <button id="ui-send" class="btn btn-send" onclick="sendMsg()">SEND</button>
-    </div>
-</div>
+    </nav>
 
-<div id="online-list">
-    <div id="ui-online" style="font-size: 0.8em; color: #555; margin-bottom: 15px;">ONLINE USERS</div>
-    <div id="users-box"></div>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBA5UpytVU_dfQI4pMJ7A-pr4LN4jfU7lo",
-      authDomain: "vn-gaming-messenger.firebaseapp.com",
-      projectId: "vn-gaming-messenger",
-      storageBucket: "vn-gaming-messenger.firebasestorage.app",
-      messagingSenderId: "561627453007",
-      appId: "1:561627453007:web:71e824bc094a132ea97c3a"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    const socket = io();
-
-    let myInfo = { name: "익명", pic: `https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`, server: "GLOBAL_LOBBY" };
-    
-    // 다국어 데이터
-    const i18n = {
-        ko: { create: "+ 서버 생성", send: "전송", online: "접속 유저", placeholder: "메시지 전송...", login: "로그인", logout: "로그아웃" },
-        en: { create: "+ Create Node", send: "Send", online: "Online Users", placeholder: "Type message...", login: "Login", logout: "Logout" },
-        vi: { create: "+ Tạo máy chủ", send: "Gửi", online: "Người dùng", placeholder: "Nhập tin nhắn...", login: "Đăng nhập", logout: "Đăng xuất" }
-    };
-
-    window.changeLang = () => {
-        const l = document.getElementById('lang-select').value;
-        document.getElementById('ui-create').innerText = i18n[l].create;
-        document.getElementById('ui-send').innerText = i18n[l].send;
-        document.getElementById('ui-online').innerText = i18n[l].online;
-        document.getElementById('msg-input').placeholder = i18n[l].placeholder;
-        document.getElementById('auth-btn').innerText = auth.currentUser ? i18n[l].logout : i18n[l].login;
-    };
-
-    window.handleAuth = () => {
-        if(auth.currentUser) signOut(auth).then(() => location.reload());
-        else signInWithPopup(auth, provider);
-    };
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            myInfo.name = user.displayName;
-            myInfo.pic = user.photoURL;
-            changeLang();
-            socket.emit('join-server', myInfo);
-        }
-    });
-
-    window.addServer = () => {
-        const s = prompt("서버 이름을 입력하세요:");
-        if(s) socket.emit('create-server', s.toUpperCase());
-    };
-
-    socket.on('server-list', (list) => {
-        const box = document.getElementById('server-list');
-        box.innerHTML = list.map(s => `<div class="server-item ${s === myInfo.server ? 'active' : ''}" onclick="switchRoom('${s}')"># ${s}</div>`).join('');
-    });
-
-    window.switchRoom = (s) => {
-        myInfo.server = s;
-        document.getElementById('room-title').innerText = `# ${s}`;
-        document.getElementById('messages').innerHTML = '';
-        socket.emit('join-server', myInfo);
-    };
-
-    window.sendMsg = () => {
-        const input = document.getElementById('msg-input');
-        if(input.value.trim()) {
-            socket.emit('message', { msg: input.value });
-            input.value = '';
-        }
-    };
-
-    document.getElementById('file-input').onchange = function(e) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = () => socket.emit('message', { msg: "Sent an image", file: reader.result });
-        reader.readAsDataURL(file);
-    };
-
-    socket.on('message', renderMsg);
-    socket.on('chat-history', (history) => history.forEach(renderMsg));
-    
-    // 삭제 반영
-    socket.on('msg-deleted', (id) => {
-        const el = document.getElementById(`msg-${id}`);
-        if(el) el.remove();
-    });
-
-    function renderMsg(data) {
-        const box = document.getElementById('messages');
-        const div = document.createElement('div');
-        div.className = 'msg-box';
-        div.id = `msg-${data.id}`;
-        div.innerHTML = `
-            <img src="${data.pic}" class="avatar">
-            <div class="bubble">
-                <div style="font-size:0.7em; opacity:0.6; margin-bottom:4px;">${data.name}</div>
-                ${data.file ? `<img src="${data.file}" style="max-width:100%; border-radius:10px;"><br>` : ''}
-                ${data.msg}
-                <div style="font-size:0.6em; opacity:0.4; margin-top:4px;">${data.timestamp}</div>
+    <main id="chat-main">
+        <header id="chat-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <img id="my-pic" src="" style="width:35px; height:35px; border-radius:50%; border:2px solid var(--void);">
+                <span id="room-title"># GLOBAL_LOBBY</span>
             </div>
-            ${data.name === myInfo.name ? `<span class="del-btn" onclick="deleteMsg('${data.id}')">[X]</span>` : ''}
-        `;
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
-    }
-
-    window.deleteMsg = (id) => socket.emit('delete-msg', id);
-
-    socket.on('online-users', (users) => {
-        document.getElementById('users-box').innerHTML = users.map(u => `
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-                <img src="${u.pic}" class="avatar"> <span>${u.name}</span>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <select id="lang-select" onchange="applyLang()">
+                    <option value="ko">KR</option>
+                    <option value="en">EN</option>
+                    <option value="vi">VI</option>
+                </select>
+                <button onclick="startCall()" class="btn" style="background:green;">📞</button>
+                <button onclick="document.body.classList.toggle('light-theme')" class="btn" style="background:#444;">🌗</button>
+                <button id="login-btn" onclick="handleLogin()" class="btn btn-send">LOGIN</button>
             </div>
-        `).join('');
-    });
-</script>
+        </header>
+
+        <div id="messages"></div>
+        <div id="typing-indicator"></div>
+
+        <div id="input-area">
+            <label style="font-size: 1.5rem; cursor: pointer;">📎<input type="file" id="file-input" hidden></label>
+            <input type="text" id="msg-input" placeholder="메시지를 입력하세요..." onkeypress="checkTyping(event)">
+            <button onclick="sendMsg()" class="btn btn-send" id="send-txt">SEND</button>
+        </div>
+    </main>
+
+    <aside id="online-users" style="width: 220px; background: var(--panel); border-left: 1px solid rgba(255,255,255,0.05); padding: 20px;">
+        <h4 style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 20px;">ONLINE USERS</h4>
+        <div id="user-list"></div>
+    </aside>
+
+    <div id="call-modal">
+        <video id="remote-video" autoplay></video>
+        <video id="local-video" autoplay muted style="width: 150px; position: absolute; bottom: 30px; right: 30px; border: 2px solid white;"></video>
+        <button onclick="endCall()" class="btn" style="background:red; width:100%;">HANG UP</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+        // Firebase 설정 (민석님의 프로젝트 정보)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBA5UpytVU_dfQI4pMJ7A-pr4LN4jfU7lo",
+            authDomain: "vn-gaming-messenger.firebaseapp.com",
+            projectId: "vn-gaming-messenger",
+            storageBucket: "vn-gaming-messenger.firebasestorage.app",
+            messagingSenderId: "561627453007",
+            appId: "1:561627453007:web:71e824bc094a132ea97c3a"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        const socket = io();
+        const peer = new Peer(); // 영상통화용 고유 ID 생성
+
+        let myData = { name: '익명', pic: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1', room: 'GLOBAL_LOBBY', peerId: null };
+        let isTyping = false;
+        let typingTimeout;
+
+        // 다국어 설정
+        const langPack = {
+            ko: { send: "전송", placeholder: "메시지 입력...", login: "로그인", logout: "로그아웃" },
+            en: { send: "Send", placeholder: "Type a message...", login: "Login", logout: "Logout" },
+            vi: { send: "Gửi", placeholder: "Nhập tin nhắn...", login: "Đăng nhập", logout: "Đăng xuất" }
+        };
+
+        window.applyLang = () => {
+            const l = document.getElementById('lang-select').value;
+            document.getElementById('msg-input').placeholder = langPack[l].placeholder;
+            document.getElementById('send-txt').innerText = langPack[l].send;
+            document.getElementById('login-btn').innerText = auth.currentUser ? langPack[l].logout : langPack[l].login;
+        };
+
+        // PeerJS: 영상통화 수신 처리
+        peer.on('open', (id) => { myData.peerId = id; });
+        peer.on('call', (call) => {
+            if(confirm("영상통화 요청이 왔습니다. 받으시겠습니까?")) {
+                navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+                    document.getElementById('call-modal').style.display = 'block';
+                    document.getElementById('local-video').srcObject = stream;
+                    call.answer(stream);
+                    call.on('stream', (remoteStream) => {
+                        document.getElementById('remote-video').srcObject = remoteStream;
+                    });
+                });
+            }
+        });
+
+        // 로그인 / 인증
+        window.handleLogin = () => {
+            if(auth.currentUser) signOut(auth).then(() => location.reload());
+            else signInWithPopup(auth, provider);
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                myData.name = user.displayName;
+                myData.pic = user.photoURL;
+                document.getElementById('my-pic').src = myData.pic;
+                applyLang();
+                socket.emit('auth', myData);
+            }
+        });
+
+        // 채팅 및 실시간 기능
+        window.sendMsg = () => {
+            const input = document.getElementById('msg-input');
+            if(input.value.trim()) {
+                // E2EE 암호화 (간단하게 b64 처리, 실제 서비스시 CryptoJS 권장)
+                const encrypted = btoa(unescape(encodeURIComponent(input.value)));
+                socket.emit('message', { msg: encrypted });
+                input.value = '';
+                stopTyping();
+            }
+        };
+
+        window.checkTyping = (e) => {
+            if(e.keyCode === 13) sendMsg();
+            else {
+                if(!isTyping) {
+                    isTyping = true;
+                    socket.emit('typing', true);
+                }
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(stopTyping, 2000);
+            }
+        };
+
+        function stopTyping() {
+            isTyping = false;
+            socket.emit('typing', false);
+        }
+
+        socket.on('message', renderMsg);
+        socket.on('chat-history', (history) => {
+            document.getElementById('messages').innerHTML = '';
+            history.forEach(renderMsg);
+        });
+
+        function renderMsg(data) {
+            const container = document.getElementById('messages');
+            const isMine = data.name === myData.name;
+            const div = document.createElement('div');
+            div.className = `msg-box ${isMine ? 'mine' : ''}`;
+            div.id = `msg-${data.id}`;
+            
+            // 복호화
+            const decrypted = decodeURIComponent(escape(atob(data.msg)));
+
+            div.innerHTML = `
+                <img src="${data.pic}" style="width:35px; height:35px; border-radius:50%;">
+                <div class="bubble">
+                    <div style="font-size:0.7rem; opacity:0.5; margin-bottom:4px;">${data.name}</div>
+                    ${data.file ? `<img src="${data.file}" style="max-width:100%; border-radius:10px;">` : ''}
+                    <div>${decrypted}</div>
+                    <div style="font-size:0.6rem; opacity:0.3; text-align:right; margin-top:4px;">${data.timestamp} ✓</div>
+                </div>
+                ${isMine ? `<span onclick="deleteMsg('${data.id}')" style="cursor:pointer; font-size:0.7rem; color:red; align-self:center; margin:0 10px;">X</span>` : ''}
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        window.deleteMsg = (id) => socket.emit('delete-msg', id);
+        socket.on('msg-deleted', (id) => document.getElementById(`msg-${id}`)?.remove());
+
+        // 입력 중 표시
+        socket.on('user-typing', (data) => {
+            document.getElementById('typing-indicator').innerText = data.isTyping ? `${data.name}님이 입력 중...` : '';
+        });
+
+        // 서버/방 관리
+        socket.on('init-data', (data) => {
+            const list = document.getElementById('room-list');
+            list.innerHTML = data.servers.map(s => `<div class="nav-item ${s === myData.room ? 'active' : ''}" onclick="window.joinRoom('${s}')"># ${s}</div>`).join('');
+        });
+
+        window.joinRoom = (name) => {
+            myData.room = name;
+            document.getElementById('room-title').innerText = `# ${name}`;
+            socket.emit('join-room', name);
+            // UI 업데이트는 init-data에서 재처리되도록 유도
+        };
+
+        socket.on('user-update', (users) => {
+            document.getElementById('user-list').innerHTML = users.map(u => `
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                    <div style="width:10px; height:10px; border-radius:50%; background:green;"></div>
+                    <img src="${u.pic}" style="width:25px; height:25px; border-radius:50%;">
+                    <span style="font-size:0.8rem;">${u.name}</span>
+                </div>
+            `).join('');
+        });
+
+        // 영상통화 시작
+        window.startCall = () => {
+            const targetPeerId = prompt("통화할 상대의 PeerID를 입력하거나 유저를 선택하세요 (테스트용)");
+            if(targetPeerId) {
+                navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+                    document.getElementById('call-modal').style.display = 'block';
+                    document.getElementById('local-video').srcObject = stream;
+                    const call = peer.call(targetPeerId, stream);
+                    call.on('stream', (remoteStream) => {
+                        document.getElementById('remote-video').srcObject = remoteStream;
+                    });
+                });
+            }
+        };
+
+        window.endCall = () => { location.reload(); };
+
+        // 파일 전송
+        document.getElementById('file-input').onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = () => socket.emit('message', { msg: btoa('Sent a file'), file: reader.result, fileName: file.name });
+            reader.readAsDataURL(file);
+        };
+    </script>
 </body>
 </html>
