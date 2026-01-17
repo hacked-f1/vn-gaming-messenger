@@ -24,13 +24,13 @@ const io = new Server(server, {
 // ========================================
 // 📁 정적 파일 서비스
 // ========================================
-app.use(express.static(path.join(__dirname, '../client')));
+app.use(express.static(path.join(__dirname, '..')));
 
 // ========================================
 // 🌐 Express 라우팅
 // ========================================
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/index.html'));
+  res.sendFile(path.join(__dirname, '../index.html'));
 });
 
 // ========================================
