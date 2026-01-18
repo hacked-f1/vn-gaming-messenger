@@ -2,297 +2,283 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>VOID: THE ABYSS</title>
+    <title>VOID: SYSTEM OVERRIDE</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        /* [VOID 테마 변수] */
         :root { 
-            --bg-deep: #000000; 
+            --bg-deep: #050505; 
             --bg-panel: #0a0a0a; 
-            --bg-element: #111111; 
-            --accent: #ffffff; 
-            --text-main: #e0e0e0; 
-            --text-dim: #666666;
-            --border: #333333;
-            --glow: 0 0 10px rgba(255, 255, 255, 0.3);
+            --bg-card: #111;
+            --neon-green: #0f0;
+            --neon-red: #f00;
+            --text-main: #cecece; 
+            --border: #333;
+            --discord-blue: #5865f2;
         }
 
-        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Rajdhani', sans-serif; }
-        
-        body { background: var(--bg-deep); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
-
-        /* [1. 서버 사이드바 - 왼쪽] */
-        #side-servers { 
-            width: 80px; 
+        /* [HACKER FX] CRT Scanline & Base */
+        body { 
             background: var(--bg-deep); 
-            padding: 20px 0; 
+            color: var(--text-main); 
+            height: 100vh; 
             display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            gap: 15px; 
-            border-right: 1px solid var(--border);
-        }
-
-        /* 아이콘 디자인 변경: 원형 -> 사각형, 글로우 효과 */
-        .srv-icon { 
-            width: 50px; 
-            height: 50px; 
-            background: var(--bg-element); 
-            border: 1px solid #222;
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            cursor: pointer; 
-            transition: all 0.3s ease; 
-            color: var(--text-dim);
-            font-weight: bold;
-            font-size: 18px;
-        }
-        .srv-icon:hover, .srv-icon.active { 
-            background: var(--accent); 
-            color: black; 
-            box-shadow: var(--glow);
-            border-color: var(--accent);
+            overflow: hidden; 
+            font-family: 'Share Tech Mono', monospace;
         }
         
-        /* 로고 이미지 스타일 */
-        .home-logo {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: grayscale(100%);
-            transition: 0.3s;
-        }
-        .srv-icon:hover .home-logo { filter: grayscale(0%); }
-
-        /* [2. 채널 사이드바 - 중간] */
-        #side-channels { 
-            width: 260px; 
-            background: var(--bg-panel); 
-            display: flex; 
-            flex-direction: column; 
-            border-right: 1px solid var(--border);
-        }
-        
-        #srv-title {
-            padding: 20px;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--border);
-            color: var(--accent);
-        }
-
-        .list-header {
-            font-size: 12px;
-            color: var(--text-dim);
-            padding: 15px 20px 5px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .item { 
-            margin: 2px 10px; 
-            padding: 10px; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            gap: 12px; 
-            font-size: 16px; 
-            color: var(--text-dim);
-            transition: 0.2s;
-        }
-        .item:hover { 
-            color: var(--accent); 
-            background: rgba(255,255,255,0.05); 
-            border-left: 2px solid var(--accent);
-        }
-        .item img { filter: grayscale(100%); transition:0.2s; }
-        .item:hover img { filter: grayscale(0%); }
-
-        /* [3. 메인 채팅창] */
-        #chat-main { flex: 1; background: var(--bg-panel); display: flex; flex-direction: column; position: relative; }
-        
-        /* 배경에 은은한 로고 깔기 */
-        #chat-main::before {
-            content: '';
+        body::after {
+            content: " ";
+            display: block;
             position: absolute;
-            inset: 0;
-            background: url('Gemini_Generated_Image_fvr7oofvr7oofvr7.jpg') no-repeat center;
-            background-size: 500px;
-            opacity: 0.03;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 9999;
+            background-size: 100% 2px, 3px 100%;
             pointer-events: none;
         }
 
+        /* 스크롤바 커스텀 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon-green); }
+
+        /* [LAYOUT] */
+        #side-servers { 
+            width: 80px; background: #000; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 15px;
+        }
+        #side-channels { width: 260px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        #chat-main { flex: 1; background: var(--bg-panel); display: flex; flex-direction: column; position: relative; }
+
+        /* 아이콘 스타일 */
+        .srv-icon { 
+            width: 50px; height: 50px; border-radius: 50%; background: #222; 
+            display: flex; align-items: center; justify-content: center; cursor: pointer; 
+            transition: 0.3s; color: #888; overflow: hidden; border: 2px solid transparent;
+        }
+        .srv-icon:hover, .srv-icon.active { 
+            border-radius: 15px; border-color: var(--neon-green); color: var(--neon-green); 
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+        .home-logo { width: 100%; height: 100%; object-fit: cover; }
+
+        /* 유저 리스트 아이템 */
+        .user-item { 
+            padding: 10px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; 
+            transition: 0.2s; border-left: 2px solid transparent;
+        }
+        .user-item:hover { background: rgba(0, 255, 0, 0.05); border-left-color: var(--neon-green); }
+        .user-avatar-sm { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #555; }
+
+        /* 채팅 영역 */
         header { 
-            height: 60px; 
-            padding: 0 25px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            border-bottom: 1px solid var(--border);
-            background: rgba(10,10,10,0.95);
-            backdrop-filter: blur(5px);
-            z-index: 10;
+            height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; 
+            border-bottom: 1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
-        #chat-title { font-size: 18px; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
-
-        #messages { flex: 1; overflow-y: auto; padding: 30px; z-index: 1; }
+        #chat-title { font-size: 20px; color: var(--neon-green); text-shadow: 0 0 5px var(--neon-green); }
         
-        /* 메시지 박스 디자인 변경 */
-        .msg { display: flex; gap: 15px; margin-bottom: 25px; animation: fadeIn 0.3s ease; }
-        .msg img { width: 45px; height: 45px; border: 1px solid var(--border); }
-        .msg-content { max-width: 80%; }
-        .msg-user { font-weight: bold; color: var(--accent); margin-right: 10px; font-size: 16px; }
-        .msg-time { font-size: 12px; color: var(--text-dim); }
-        .msg-text { 
-            margin-top: 5px; 
-            line-height: 1.5; 
-            color: var(--text-main); 
-            font-size: 15px;
-        }
+        #messages { flex: 1; overflow-y: auto; padding: 20px; }
+        .msg { display: flex; gap: 15px; margin-bottom: 20px; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        .msg-content { background: #1a1a1a; padding: 10px 15px; border-radius: 0 10px 10px 10px; border: 1px solid #333; max-width: 80%; }
+        .msg-user { color: var(--neon-green); font-weight: bold; font-size: 14px; margin-bottom: 4px; display: block; }
+        .msg-text { color: #ddd; line-height: 1.4; }
 
-        #input-area { padding: 0 25px 30px; z-index: 10; }
+        #input-area { padding: 20px; }
         .input-box { 
-            background: var(--bg-element); 
-            border: 1px solid var(--border); 
-            padding: 15px 20px; 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-            transition: 0.3s;
+            background: #111; border: 1px solid var(--border); padding: 10px 20px; 
+            border-radius: 5px; display: flex; align-items: center;
         }
-        .input-box:focus-within { border-color: var(--accent); box-shadow: var(--glow); }
-        input { 
-            flex: 1; 
-            background: transparent; 
-            border: none; 
-            color: white; 
-            outline: none; 
-            font-size: 16px; 
-        }
+        .input-box:focus-within { border-color: var(--neon-green); box-shadow: 0 0 5px var(--neon-green); }
+        input { flex: 1; background: transparent; border: none; color: white; outline: none; font-family: inherit; font-size: 16px; }
 
-        /* [모달창 - 로그인, 프로필] */
+        /* [MODALS] */
         .modal { 
-            position: fixed; inset:0; 
-            background: rgba(0,0,0,0.9); 
-            z-index: 1000; 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            backdrop-filter: blur(5px);
-        }
-        .modal-card { 
-            width: 400px; 
-            background: black; 
-            border: 1px solid var(--accent); 
-            padding: 40px; 
-            text-align: center; 
-            box-shadow: var(--glow);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; 
+            display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px);
         }
         
-        .auth-logo { width: 80px; margin-bottom: 20px; animation: rotate 20s linear infinite; }
-        @keyframes rotate { 100% { transform: rotate(360deg); } }
-
-        input.auth-input {
-            width: 100%; padding: 12px; margin-bottom: 12px;
-            background: #111; border: 1px solid #333; color: white;
-            transition: 0.3s;
+        /* 로그인/회원가입 폼 */
+        .auth-card { 
+            width: 400px; background: #000; border: 1px solid var(--neon-green); padding: 40px; 
+            text-align: center; box-shadow: 0 0 20px rgba(0, 255, 0, 0.2); position: relative;
         }
-        input.auth-input:focus { border-color: var(--accent); }
+        .auth-card::before {
+            content: "SYSTEM_AUTH_REQUIRED"; position: absolute; top: -10px; left: 20px; 
+            background: #000; padding: 0 10px; color: var(--neon-green); font-size: 12px;
+        }
+        .glitch-logo { width: 80px; margin-bottom: 20px; animation: glitch 2s infinite; }
+        @keyframes glitch {
+            0% { transform: translate(0); } 20% { transform: translate(-2px, 2px); } 40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); } 80% { transform: translate(2px, -2px); } 100% { transform: translate(0); }
+        }
 
-        .btn-v { 
-            background: white; 
-            color: black; 
-            border: none; 
-            padding: 12px; 
-            width: 100%; 
-            cursor: pointer; 
-            font-weight: 800; 
-            margin-top: 10px; 
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        .input-field { width: 100%; background: #111; border: 1px solid #333; padding: 12px; color: white; margin-bottom: 10px; font-family: inherit; }
+        .input-field:focus { border-color: var(--neon-green); }
+        
+        .btn-neon { 
+            width: 100%; background: var(--neon-green); color: black; border: none; padding: 12px; 
+            font-weight: bold; cursor: pointer; font-family: inherit; margin-top: 10px; text-transform: uppercase;
             transition: 0.2s;
         }
-        .btn-v:hover { background: #ccc; box-shadow: 0 0 15px white; }
-        .btn-sub { background: transparent; color: #666; border: 1px solid #333; }
-        .btn-sub:hover { border-color: white; color: white; background: transparent; }
+        .btn-neon:hover { background: white; box-shadow: 0 0 15px white; }
+        .link-text { margin-top: 15px; font-size: 12px; color: #666; cursor: pointer; text-decoration: underline; }
+        .link-text:hover { color: var(--neon-green); }
+
+        /* [NEW] PROFILE CARD (Discord Style) */
+        .profile-card {
+            width: 600px; background: #111; border-radius: 8px; overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8); position: relative; border: 1px solid #333;
+        }
+        .profile-banner { height: 120px; background: #5865f2; position: relative; }
+        .profile-avatar-wrapper {
+            position: absolute; bottom: -40px; left: 20px;
+            width: 90px; height: 90px; border-radius: 50%; background: #111; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; border: 4px solid #111; }
+        .profile-status-dot {
+            position: absolute; bottom: 5px; right: 5px; width: 24px; height: 24px;
+            background: #23a559; border: 4px solid #111; border-radius: 50%;
+        }
+        
+        .profile-body { padding: 50px 20px 20px 20px; background: #111; }
+        .profile-name { font-size: 24px; font-weight: bold; color: white; display: flex; align-items: center; gap: 10px; }
+        .profile-badge { background: #5865f2; font-size: 10px; padding: 2px 5px; border-radius: 4px; vertical-align: middle; }
+        
+        .section-box { background: #1e1e1e; padding: 15px; border-radius: 8px; margin-top: 15px; }
+        .section-header { font-size: 12px; font-weight: bold; color: #aaa; text-transform: uppercase; margin-bottom: 8px; }
+        .profile-bio { font-size: 14px; color: #ddd; white-space: pre-wrap; }
+        .profile-note { font-size: 12px; color: #888; margin-top: 5px; }
+
+        .profile-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-action { 
+            flex: 1; padding: 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: bold; 
+            transition: 0.2s; font-family: inherit;
+        }
+        .btn-msg { background: #5865f2; color: white; }
+        .btn-msg:hover { background: #4752c4; }
+        .btn-edit { background: #4e5058; color: white; }
+
+        /* 편집 모드 인풋 */
+        .edit-input { width: 100%; background: #2b2d31; border: none; padding: 8px; color: white; border-radius: 4px; margin-top: 5px; font-family: inherit; }
 
     </style>
 </head>
 <body>
 
-    <div id="auth-modal" class="modal" style="display: flex;">
-        <div class="modal-card">
-            <img src="Gemini_Generated_Image_fvr7oofvr7oofvr7.jpg" class="auth-logo">
-            <h2 style="color:white; margin-bottom:30px; letter-spacing:3px;">VOID ACCESS</h2>
-            <input type="email" id="email" class="auth-input" placeholder="ACCESS ID (EMAIL)">
-            <input type="password" id="pw" class="auth-input" placeholder="PASSWORD">
-            <button class="btn-v" onclick="handleAuth('login')">ENTER VOID</button>
-            <button class="btn-v btn-sub" onclick="handleAuth('reg')">INITIALIZE NEW ID</button>
+    <div id="login-modal" class="modal" style="display: flex;">
+        <div class="auth-card">
+            <img src="./Gemini_Generated_Image_fvr7oofvr7oofvr7.jpg" class="glitch-logo">
+            <h2 style="color:var(--neon-green); margin-bottom:20px;">SYSTEM LOGIN</h2>
+            <input type="email" id="login-email" class="input-field" placeholder="CODENAME (EMAIL)">
+            <input type="password" id="login-pw" class="input-field" placeholder="PASSWORD">
+            <button class="btn-neon" onclick="handleLogin()">ACCESS</button>
+            <div class="link-text" onclick="showRegister()">No Identity? Initialize Sequence -></div>
+        </div>
+    </div>
+
+    <div id="register-modal" class="modal">
+        <div class="auth-card" style="border-color: var(--neon-red); box-shadow: 0 0 20px rgba(255,0,0,0.2);">
+            <h2 style="color:var(--neon-red); margin-bottom:20px;">NEW IDENTITY</h2>
+            <input type="text" id="reg-name" class="input-field" placeholder="PUBLIC ALIAS (NICKNAME)">
+            <input type="email" id="reg-email" class="input-field" placeholder="EMAIL ADDRESS">
+            <input type="password" id="reg-pw" class="input-field" placeholder="PASSWORD (Min 6 chars)">
+            <button class="btn-neon" style="background:var(--neon-red); color:white;" onclick="handleRegister()">REGISTER</button>
+            <div class="link-text" onclick="showLogin()"><- Back to Login</div>
         </div>
     </div>
 
     <div id="profile-modal" class="modal">
-        <div class="modal-card">
-            <h3 style="color:white; margin-bottom:20px;">IDENTITY CONFIG</h3>
-            <input type="text" id="new-name" class="auth-input" placeholder="NEW ALIAS">
-            <button class="btn-v" onclick="saveProfile()">UPDATE</button>
-            <button class="btn-v btn-sub" onclick="closeModal('profile-modal')">CANCEL</button>
+        <div class="profile-card">
+            <div class="profile-banner" id="p-banner">
+                <div style="position:absolute; right:15px; top:15px; cursor:pointer; color:rgba(0,0,0,0.5);" onclick="closeModal('profile-modal')">✖</div>
+            </div>
+            <div class="profile-avatar-wrapper">
+                <img id="p-avatar" src="" class="profile-avatar">
+                <div class="profile-status-dot"></div>
+            </div>
+            
+            <div class="profile-body">
+                <div class="profile-name">
+                    <span id="p-name">Username</span>
+                    <span class="profile-badge">VOID USER</span>
+                </div>
+                <div id="p-status" style="font-size:14px; color:#ccc; margin-top:5px;">Playing HELLDIVERS 2</div>
+                
+                <div class="section-box">
+                    <div class="section-header">About Me</div>
+                    <div id="p-about" class="profile-bio">I only fly away...</div>
+                    <input type="text" id="edit-about" class="edit-input" style="display:none;" placeholder="Write something...">
+                </div>
+
+                <div class="section-box">
+                    <div class="section-header">MEMBER SINCE</div>
+                    <div style="font-size:13px; color:#aaa;">Jan 18, 2026</div>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="btn-action btn-msg" id="btn-dm" onclick="sendDM()">Send Message</button>
+                    <button class="btn-action btn-edit" id="btn-edit" style="display:none;" onclick="toggleEdit()">Edit Profile</button>
+                    <button class="btn-action btn-edit" id="btn-save" style="display:none; background:var(--neon-green); color:black;" onclick="saveProfile()">Save</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <nav id="side-servers">
-        <div class="srv-icon active" onclick="switchRoom('global-1', 'VOID OFFICIAL')">
-            <img src="Gemini_Generated_Image_fvr7oofvr7oofvr7.jpg" class="home-logo">
+        <div class="srv-icon active" onclick="switchRoom('global-1', 'VOID LOBBY')">
+            <img src="./Gemini_Generated_Image_fvr7oofvr7oofvr7.jpg" class="home-logo">
         </div>
-        <div id="server-list" style="display:flex; flex-direction:column; gap:15px; width:100%; align-items:center;"></div>
-        <div class="srv-icon" style="color:var(--accent); border-style:dashed;" onclick="createServer()">+</div>
+        <div id="server-list"></div>
+        <div class="srv-icon" style="border: 2px dashed #444;" onclick="createServer()">+</div>
     </nav>
 
     <aside id="side-channels">
-        <div id="srv-title">VOID OFFICIAL</div>
-        
-        <div class="list-header">Communication Channels</div>
-        <div class="item" onclick="switchRoom('global-1', 'VOID OFFICIAL')">
-            <i class="fa-solid fa-square"></i> GENERAL
-        </div>
-        
-        <div class="list-header">Active Entities</div>
+        <div style="padding: 20px; font-size:18px; font-weight:bold; color:white; border-bottom:1px solid #333;">VOID NETWORK</div>
+        <div style="padding:10px 20px; color:#666; font-size:12px;">OPERATIVES</div>
         <div id="user-list" style="flex:1; overflow-y:auto;"></div>
-
-        <div style="padding:15px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px; background:#000;">
-            <img id="my-avatar" src="" style="width:36px; height:36px; border:1px solid #333;">
-            <div id="my-name" style="flex:1; font-size:14px; font-weight:bold; color:white;">Guest</div>
-            <i class="fa-solid fa-cog" style="cursor:pointer; color:#666;" onclick="openProfile()"></i>
+        
+        <div style="background:#050505; padding:10px; display:flex; align-items:center; gap:10px; border-top:1px solid #333;">
+            <img id="my-avatar" src="" style="width:36px; height:36px; border-radius:50%; cursor:pointer;" onclick="openMyProfile()">
+            <div style="flex:1;">
+                <div id="my-name" style="font-weight:bold; font-size:14px;">Guest</div>
+                <div style="font-size:11px; color:var(--neon-green);">ONLINE</div>
+            </div>
+            <i class="fa-solid fa-microphone" style="color:#666;"></i>
         </div>
     </aside>
 
     <main id="chat-main">
         <header>
-            <span id="chat-title"># GENERAL</span>
-            <i class="fa-solid fa-phone" style="cursor:pointer; color:var(--text-dim); transition:0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#666'" onclick="startCall()"></i>
+            <span id="chat-title"># VOID LOBBY</span>
+            <div style="display:flex; gap:15px;">
+                <i class="fa-solid fa-phone" style="cursor:pointer; color:var(--neon-green);" onclick="startCall()"></i>
+                <i class="fa-solid fa-video" style="cursor:pointer; color:var(--neon-green);"></i>
+            </div>
         </header>
         <div id="messages"></div>
         <div id="input-area">
             <div class="input-box">
-                <input type="text" id="msg-input" placeholder="Transmitting data to the void..." onkeypress="if(event.key==='Enter') send()">
+                <input type="text" id="msg-input" placeholder="Execute command..." onkeypress="if(event.key==='Enter') send()">
+                <i class="fa-solid fa-paper-plane" style="color:var(--neon-green); cursor:pointer;" onclick="send()"></i>
             </div>
         </div>
     </main>
 
     <div id="call-ui" class="modal">
-        <div class="modal-card" style="width:900px; max-width:90%;">
-            <div style="display:flex; justify-content:center; gap:20px; margin-bottom:30px;">
-                <video id="remote-v" autoplay playsinline style="width:45%; background:#000; border:1px solid var(--accent);"></video>
-                <video id="local-v" autoplay muted playsinline style="width:45%; background:#000; border:1px solid #333;"></video>
+        <div style="text-align:center;">
+            <div style="display:flex; gap:20px; margin-bottom:20px;">
+                <video id="remote-v" autoplay playsinline style="width:400px; background:black; border:2px solid var(--neon-red);"></video>
+                <video id="local-v" autoplay muted playsinline style="width:150px; position:absolute; bottom:100px; right:35%; border:1px solid white;"></video>
             </div>
-            <button class="btn-v" style="background:transparent; border:1px solid red; color:red;" onclick="endCall()">TERMINATE SIGNAL</button>
+            <button class="btn-neon" style="background:red; color:white; width:200px;" onclick="endCall()">DISCONNECT</button>
         </div>
     </div>
 
@@ -308,81 +294,149 @@
     const CRYPTO_KEY = "void-key";
 
     let myInfo = null, localStream = null, myPeerId = '';
+    let currentProfileId = null; // 현재 보고 있는 프로필 유저 ID
+
     peer.on('open', id => myPeerId = id);
 
-    // [버그 수정: auth/invalid-email 해결]
-    window.handleAuth = async (type) => {
-        // .trim()을 추가하여 공백 제거
-        const email = document.getElementById('email').value.trim();
-        const pw = document.getElementById('pw').value.trim();
+    // [UI Control Functions]
+    window.showRegister = () => { document.getElementById('login-modal').style.display = 'none'; document.getElementById('register-modal').style.display = 'flex'; };
+    window.showLogin = () => { document.getElementById('register-modal').style.display = 'none'; document.getElementById('login-modal').style.display = 'flex'; };
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 
-        // 입력값 검증 로직 추가
-        if (!email) return alert("ACCESS ID(이메일)를 입력하십시오.");
-        if (!pw) return alert("PASSWORD를 입력하십시오.");
-
+    // [Auth Logic]
+    window.handleLogin = async () => {
+        const email = document.getElementById('login-email').value;
+        const pw = document.getElementById('login-pw').value;
         try {
-            if(type === 'reg') {
-                const name = prompt('식별 코드(닉네임) 입력:');
-                if(!name) return; 
-                
-                const res = await createUserWithEmailAndPassword(auth, email, pw);
-                await updateProfile(res.user, { displayName: name });
-                alert('등록 완료. ACCESS ID로 로그인하십시오.');
-            } else {
-                const res = await signInWithEmailAndPassword(auth, email, pw);
-                socket.emit('auth-success', { uid: res.user.uid, displayName: res.user.displayName });
-            }
+            const res = await signInWithEmailAndPassword(auth, email, pw);
+            socket.emit('auth-success', { uid: res.user.uid, displayName: res.user.displayName });
         } catch(e) { 
-            // 에러 메시지 사용자 친화적으로 변경
-            if(e.code === 'auth/invalid-email') alert("잘못된 이메일 형식입니다.");
-            else if(e.code === 'auth/weak-password') alert("비밀번호는 6자리 이상이어야 합니다.");
-            else alert("오류 발생: " + e.message); 
+            alert("접속 거부: 이메일 또는 비밀번호를 확인하십시오."); 
+            console.error(e);
         }
     };
 
+    window.handleRegister = async () => {
+        const name = document.getElementById('reg-name').value;
+        const email = document.getElementById('reg-email').value;
+        const pw = document.getElementById('reg-pw').value;
+        if(!name || !email || !pw) return alert("모든 필드를 입력하십시오.");
+
+        try {
+            const res = await createUserWithEmailAndPassword(auth, email, pw);
+            await updateProfile(res.user, { displayName: name });
+            alert("ID 생성 완료. 로그인하십시오.");
+            showLogin();
+        } catch(e) {
+            alert("생성 실패: " + e.message);
+        }
+    };
+
+    // [Socket Events]
     socket.on('login-complete', user => {
         myInfo = user;
-        document.getElementById('auth-modal').style.display = 'none';
+        document.getElementById('login-modal').style.display = 'none';
         document.getElementById('my-name').innerText = user.displayName;
         document.getElementById('my-avatar').src = user.avatar;
-        switchRoom('global-1', 'VOID OFFICIAL');
+        switchRoom('global-1', 'VOID LOBBY');
     });
 
-    window.openProfile = () => { document.getElementById('new-name').value = myInfo.displayName; document.getElementById('profile-modal').style.display = 'flex'; };
-    window.saveProfile = () => { socket.emit('update-profile-req', document.getElementById('new-name').value); closeModal('profile-modal'); };
-    window.createServer = () => { const name = prompt('서버 이름:'); if(name) socket.emit('create-server', name); };
-
     socket.on('update-all', data => {
+        // 서버 목록
         document.getElementById('server-list').innerHTML = data.servers.map(s => {
             if(s.id === 'global-1') return ''; 
             return `<div class="srv-icon" onclick="switchRoom('${s.id}', '${s.name}')">${s.name[0]}</div>`
         }).join('');
 
+        // 유저 목록 (클릭 시 프로필 보기)
         document.getElementById('user-list').innerHTML = 
             data.users.filter(u => u.uid !== myInfo.uid).map(u => `
-            <div class="item" onclick="startDM('${u.uid}', '${u.displayName}')">
-                <img src="${u.avatar}" style="width:24px; border-radius:50%; filter:grayscale(100%);"> ${u.displayName}
+            <div class="user-item" onclick="viewProfile('${u.socketId}')">
+                <img src="${u.avatar}" class="user-avatar-sm">
+                <div>
+                    <div style="font-weight:bold; font-size:14px; color:#ddd;">${u.displayName}</div>
+                    <div style="font-size:11px; color:#666;">${u.statusMsg || 'Idle'}</div>
+                </div>
             </div>`).join('');
     });
 
+    // [Profile Logic]
+    window.viewProfile = (targetSocketId) => {
+        socket.emit('get-user-info', targetSocketId);
+    };
+
+    window.openMyProfile = () => {
+        socket.emit('get-user-info', socket.id);
+    };
+
+    socket.on('user-info-res', (user) => {
+        currentProfileId = user.uid; // 현재 보고 있는 사람 ID 저장
+        const modal = document.getElementById('profile-modal');
+        const isMe = (user.uid === myInfo.uid);
+
+        document.getElementById('p-avatar').src = user.avatar;
+        document.getElementById('p-name').innerText = user.displayName;
+        document.getElementById('p-status').innerText = user.statusMsg || "System Idle";
+        document.getElementById('p-about').innerText = user.bio || "No information decrypted.";
+        
+        // 버튼 상태 제어
+        document.getElementById('btn-dm').style.display = isMe ? 'none' : 'block';
+        document.getElementById('btn-edit').style.display = isMe ? 'block' : 'none';
+        document.getElementById('btn-save').style.display = 'none';
+        document.getElementById('edit-about').style.display = 'none';
+        document.getElementById('p-about').style.display = 'block';
+
+        // 1:1 대화 버튼에 이름 바인딩
+        document.getElementById('btn-dm').onclick = () => startDM(user.uid, user.displayName);
+
+        modal.style.display = 'flex';
+    });
+
+    // 프로필 수정
+    window.toggleEdit = () => {
+        document.getElementById('p-about').style.display = 'none';
+        const input = document.getElementById('edit-about');
+        input.style.display = 'block';
+        input.value = document.getElementById('p-about').innerText;
+        document.getElementById('btn-edit').style.display = 'none';
+        document.getElementById('btn-save').style.display = 'block';
+    };
+
+    window.saveProfile = () => {
+        const newBio = document.getElementById('edit-about').value;
+        socket.emit('update-bio', newBio);
+        document.getElementById('p-about').innerText = newBio;
+        // UI 복구
+        document.getElementById('p-about').style.display = 'block';
+        document.getElementById('edit-about').style.display = 'none';
+        document.getElementById('btn-edit').style.display = 'block';
+        document.getElementById('btn-save').style.display = 'none';
+    };
+
+
+    // [Chat & Room Logic]
     window.switchRoom = (id, name) => { 
         socket.emit('join-room', id); 
-        document.getElementById('chat-title').innerText = `# ${name.toUpperCase()}`; 
-        document.getElementById('srv-title').innerText = name; 
-        document.getElementById('messages').innerHTML = ''; 
-    };
-    
-    window.startDM = (uid, name) => { 
-        const dmId = [myInfo.uid, uid].sort().join('_'); 
-        socket.emit('join-room', dmId); 
-        document.getElementById('chat-title').innerText = `@ ${name.toUpperCase()}`; 
+        document.getElementById('chat-title').innerText = `# ${name}`; 
         document.getElementById('messages').innerHTML = ''; 
     };
 
+    window.startDM = (targetUid, targetName) => {
+        const dmId = [myInfo.uid, targetUid].sort().join('_'); // Unique DM ID
+        socket.emit('join-room', dmId);
+        document.getElementById('chat-title').innerText = `@ PRIVATE: ${targetName}`; 
+        document.getElementById('messages').innerHTML = '';
+        closeModal('profile-modal');
+    };
+
+    window.createServer = () => { const name = prompt('SERVER NAME:'); if(name) socket.emit('create-server', name); };
+
     window.send = () => {
-        const input = document.getElementById('msg-input'); if(!input.value) return;
+        const input = document.getElementById('msg-input'); 
+        if(!input.value) return;
         const enc = CryptoJS.AES.encrypt(input.value, CRYPTO_KEY).toString();
-        socket.emit('message', { msg: enc }); input.value = '';
+        socket.emit('message', { msg: enc }); 
+        input.value = '';
     };
 
     socket.on('message', d => {
@@ -390,16 +444,20 @@
         const box = document.getElementById('messages');
         const div = document.createElement('div'); div.className = 'msg';
         div.innerHTML = `
-            <img src="${d.avatar}">
+            <img src="${d.avatar}" style="width:40px; height:40px; border-radius:50%; border:1px solid #333;">
             <div class="msg-content">
-                <div><span class="msg-user">${d.sender}</span><span class="msg-time">${d.timestamp}</span></div>
+                <span class="msg-user">${d.sender} <span style="font-size:10px; color:#666;">${d.timestamp}</span></span>
                 <div class="msg-text">${dec}</div>
             </div>`;
         box.appendChild(div); box.scrollTop = box.scrollHeight;
     });
 
-    socket.on('load-history', msgs => { document.getElementById('messages').innerHTML = ''; msgs.forEach(m => socket.listeners('message')[0](m)); });
+    socket.on('load-history', msgs => { 
+        document.getElementById('messages').innerHTML = ''; 
+        msgs.forEach(m => socket.listeners('message')[0](m)); 
+    });
 
+    // [WebRTC Call Logic]
     window.startCall = () => {
         document.getElementById('call-ui').style.display = 'flex';
         navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(s => {
@@ -409,7 +467,7 @@
     };
 
     socket.on('incoming-call', d => {
-        if(confirm(`Incoming transmission from ${d.from}. Accept?`)) {
+        if(confirm(`INCOMING TRANSMISSION FROM ${d.from}. ACCEPT?`)) {
             document.getElementById('call-ui').style.display = 'flex';
             navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(s => {
                 localStream = s; document.getElementById('local-v').srcObject = s;
@@ -430,8 +488,6 @@
         if(localStream) localStream.getTracks().forEach(t => t.stop());
         document.getElementById('call-ui').style.display = 'none';
     };
-
-    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
 </script>
 </body>
 </html>
