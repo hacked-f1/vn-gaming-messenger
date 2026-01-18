@@ -8,14 +8,16 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// 파일이 모두 최상위에 있으므로 경로를 현재 폴더(__dirname)로 고정
+// [수정 없음] 정적 파일(이미지 포함)을 현재 루트 디렉토리에서 제공
+app.use(express.static(__dirname));
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-app.use(express.static(__dirname));
 
+// 기본 서버 목록
 let users = {}; 
-let servers = [{ id: 'global-1', name: 'VOID 공식', owner: 'system' }]; 
+let servers = [{ id: 'global-1', name: 'VOID OFFICIAL', owner: 'system' }]; 
 let chatHistory = {};
 
 io.on('connection', (socket) => {
@@ -23,7 +25,8 @@ io.on('connection', (socket) => {
         users[socket.id] = {
             ...userData,
             socketId: socket.id,
-            avatar: `https://api.dicebear.com/7.x/adventurer/svg?seed=${userData.displayName}`,
+            // 아바타 시드도 이름 기반으로 유지
+            avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${userData.displayName}`, 
             currentRoom: null
         };
         socket.emit('login-complete', users[socket.id]);
@@ -33,7 +36,7 @@ io.on('connection', (socket) => {
     socket.on('update-profile-req', (newName) => {
         if (users[socket.id]) {
             users[socket.id].displayName = newName;
-            users[socket.id].avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${newName}`;
+            users[socket.id].avatar = `https://api.dicebear.com/7.x/identicon/svg?seed=${newName}`;
             socket.emit('login-complete', users[socket.id]);
             updateGlobalState();
         }
@@ -81,4 +84,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 VOID Server on ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 VOID Server Initiated on Port ${PORT}`));

@@ -2,94 +2,297 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>VOID ULTIMATE</title>
+    <title>VOID: THE ABYSS</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg-0: #1e1f22; --bg-1: #2b2d31; --bg-2: #313338; --void: #5865f2; --text: #dbdee1; }
-        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Pretendard', sans-serif; }
-        body { background: var(--bg-0); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
-        #side-servers { width: 72px; background: var(--bg-0); padding: 12px 0; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        #side-channels { width: 240px; background: var(--bg-1); display: flex; flex-direction: column; }
-        #chat-main { flex: 1; background: var(--bg-2); display: flex; flex-direction: column; }
-        .srv-icon { width: 48px; height: 48px; background: var(--bg-2); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; color: white; }
-        .srv-icon:hover, .srv-icon.active { border-radius: 15px; background: var(--void); }
-        .item { margin: 2px 8px; padding: 8px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; }
-        .item:hover { background: rgba(255,255,255,0.05); }
-        header { height: 48px; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(0,0,0,0.2); }
-        #messages { flex: 1; overflow-y: auto; padding: 20px; }
-        .msg { display: flex; gap: 16px; margin-bottom: 20px; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
-        .msg img { width: 40px; height: 40px; border-radius: 50%; }
-        .msg-user { font-weight: bold; color: white; margin-right: 8px; }
-        .msg-time { font-size: 11px; color: #949ba4; }
-        #input-area { padding: 0 16px 24px; }
-        .input-box { background: #383a40; border-radius: 8px; padding: 10px 16px; display: flex; align-items: center; gap: 15px; }
-        input { flex: 1; background: transparent; border: none; color: white; outline: none; }
-        .modal { position: fixed; inset:0; background: rgba(0,0,0,0.85); z-index: 1000; display: none; align-items: center; justify-content: center; }
-        .modal-card { width: 400px; background: var(--bg-1); padding: 32px; border-radius: 8px; text-align: center; }
-        .btn-v { background: var(--void); color: white; border: none; padding: 10px; border-radius: 4px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        /* [VOID 테마 변수] */
+        :root { 
+            --bg-deep: #000000; 
+            --bg-panel: #0a0a0a; 
+            --bg-element: #111111; 
+            --accent: #ffffff; 
+            --text-main: #e0e0e0; 
+            --text-dim: #666666;
+            --border: #333333;
+            --glow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; font-family: 'Rajdhani', sans-serif; }
+        
+        body { background: var(--bg-deep); color: var(--text-main); height: 100vh; display: flex; overflow: hidden; }
+
+        /* [1. 서버 사이드바 - 왼쪽] */
+        #side-servers { 
+            width: 80px; 
+            background: var(--bg-deep); 
+            padding: 20px 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 15px; 
+            border-right: 1px solid var(--border);
+        }
+
+        /* 아이콘 디자인 변경: 원형 -> 사각형, 글로우 효과 */
+        .srv-icon { 
+            width: 50px; 
+            height: 50px; 
+            background: var(--bg-element); 
+            border: 1px solid #222;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            color: var(--text-dim);
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .srv-icon:hover, .srv-icon.active { 
+            background: var(--accent); 
+            color: black; 
+            box-shadow: var(--glow);
+            border-color: var(--accent);
+        }
+        
+        /* 로고 이미지 스타일 */
+        .home-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%);
+            transition: 0.3s;
+        }
+        .srv-icon:hover .home-logo { filter: grayscale(0%); }
+
+        /* [2. 채널 사이드바 - 중간] */
+        #side-channels { 
+            width: 260px; 
+            background: var(--bg-panel); 
+            display: flex; 
+            flex-direction: column; 
+            border-right: 1px solid var(--border);
+        }
+        
+        #srv-title {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+            color: var(--accent);
+        }
+
+        .list-header {
+            font-size: 12px;
+            color: var(--text-dim);
+            padding: 15px 20px 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .item { 
+            margin: 2px 10px; 
+            padding: 10px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            font-size: 16px; 
+            color: var(--text-dim);
+            transition: 0.2s;
+        }
+        .item:hover { 
+            color: var(--accent); 
+            background: rgba(255,255,255,0.05); 
+            border-left: 2px solid var(--accent);
+        }
+        .item img { filter: grayscale(100%); transition:0.2s; }
+        .item:hover img { filter: grayscale(0%); }
+
+        /* [3. 메인 채팅창] */
+        #chat-main { flex: 1; background: var(--bg-panel); display: flex; flex-direction: column; position: relative; }
+        
+        /* 배경에 은은한 로고 깔기 */
+        #chat-main::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('Gemini_Generated_Image_fvr7oofvr7oofvr7.jpg') no-repeat center;
+            background-size: 500px;
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        header { 
+            height: 60px; 
+            padding: 0 25px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-bottom: 1px solid var(--border);
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(5px);
+            z-index: 10;
+        }
+        #chat-title { font-size: 18px; font-weight: bold; color: var(--accent); letter-spacing: 1px; }
+
+        #messages { flex: 1; overflow-y: auto; padding: 30px; z-index: 1; }
+        
+        /* 메시지 박스 디자인 변경 */
+        .msg { display: flex; gap: 15px; margin-bottom: 25px; animation: fadeIn 0.3s ease; }
+        .msg img { width: 45px; height: 45px; border: 1px solid var(--border); }
+        .msg-content { max-width: 80%; }
+        .msg-user { font-weight: bold; color: var(--accent); margin-right: 10px; font-size: 16px; }
+        .msg-time { font-size: 12px; color: var(--text-dim); }
+        .msg-text { 
+            margin-top: 5px; 
+            line-height: 1.5; 
+            color: var(--text-main); 
+            font-size: 15px;
+        }
+
+        #input-area { padding: 0 25px 30px; z-index: 10; }
+        .input-box { 
+            background: var(--bg-element); 
+            border: 1px solid var(--border); 
+            padding: 15px 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            transition: 0.3s;
+        }
+        .input-box:focus-within { border-color: var(--accent); box-shadow: var(--glow); }
+        input { 
+            flex: 1; 
+            background: transparent; 
+            border: none; 
+            color: white; 
+            outline: none; 
+            font-size: 16px; 
+        }
+
+        /* [모달창 - 로그인, 프로필] */
+        .modal { 
+            position: fixed; inset:0; 
+            background: rgba(0,0,0,0.9); 
+            z-index: 1000; 
+            display: none; 
+            align-items: center; 
+            justify-content: center; 
+            backdrop-filter: blur(5px);
+        }
+        .modal-card { 
+            width: 400px; 
+            background: black; 
+            border: 1px solid var(--accent); 
+            padding: 40px; 
+            text-align: center; 
+            box-shadow: var(--glow);
+        }
+        
+        .auth-logo { width: 80px; margin-bottom: 20px; animation: rotate 20s linear infinite; }
+        @keyframes rotate { 100% { transform: rotate(360deg); } }
+
+        input.auth-input {
+            width: 100%; padding: 12px; margin-bottom: 12px;
+            background: #111; border: 1px solid #333; color: white;
+            transition: 0.3s;
+        }
+        input.auth-input:focus { border-color: var(--accent); }
+
+        .btn-v { 
+            background: white; 
+            color: black; 
+            border: none; 
+            padding: 12px; 
+            width: 100%; 
+            cursor: pointer; 
+            font-weight: 800; 
+            margin-top: 10px; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: 0.2s;
+        }
+        .btn-v:hover { background: #ccc; box-shadow: 0 0 15px white; }
+        .btn-sub { background: transparent; color: #666; border: 1px solid #333; }
+        .btn-sub:hover { border-color: white; color: white; background: transparent; }
+
     </style>
 </head>
 <body>
 
     <div id="auth-modal" class="modal" style="display: flex;">
         <div class="modal-card">
-            <h2 style="color:white; margin-bottom:20px;">VOID LOGIN</h2>
-            <input type="email" id="email" placeholder="이메일" style="width:100%; padding:10px; margin-bottom:10px; background:#1e1f22; border:none; color:white;">
-            <input type="password" id="pw" placeholder="비밀번호" style="width:100%; padding:10px; margin-bottom:10px; background:#1e1f22; border:none; color:white;">
-            <button class="btn-v" onclick="handleAuth('login')">로그인</button>
-            <button class="btn-v" style="background:#4e5058;" onclick="handleAuth('reg')">신규 가입</button>
+            <img src="Gemini_Generated_Image_fvr7oofvr7oofvr7.jpg" class="auth-logo">
+            <h2 style="color:white; margin-bottom:30px; letter-spacing:3px;">VOID ACCESS</h2>
+            <input type="email" id="email" class="auth-input" placeholder="ACCESS ID (EMAIL)">
+            <input type="password" id="pw" class="auth-input" placeholder="PASSWORD">
+            <button class="btn-v" onclick="handleAuth('login')">ENTER VOID</button>
+            <button class="btn-v btn-sub" onclick="handleAuth('reg')">INITIALIZE NEW ID</button>
         </div>
     </div>
 
     <div id="profile-modal" class="modal">
         <div class="modal-card">
-            <h3 style="color:white; margin-bottom:15px;">프로필 수정</h3>
-            <input type="text" id="new-name" placeholder="닉네임" style="width:100%; padding:10px; background:#1e1f22; border:none; color:white;">
-            <button class="btn-v" onclick="saveProfile()">저장하기</button>
-            <button class="btn-v" style="background:#4e5058;" onclick="closeModal('profile-modal')">닫기</button>
+            <h3 style="color:white; margin-bottom:20px;">IDENTITY CONFIG</h3>
+            <input type="text" id="new-name" class="auth-input" placeholder="NEW ALIAS">
+            <button class="btn-v" onclick="saveProfile()">UPDATE</button>
+            <button class="btn-v btn-sub" onclick="closeModal('profile-modal')">CANCEL</button>
         </div>
     </div>
 
     <nav id="side-servers">
-        <div class="srv-icon active" onclick="switchRoom('global-1', 'VOID 공식')"><i class="fa-brands fa-discord"></i></div>
-        <div id="server-list"></div>
-        <div class="srv-icon" style="color:#23a559;" onclick="createServer()"><i class="fa-solid fa-plus"></i></div>
+        <div class="srv-icon active" onclick="switchRoom('global-1', 'VOID OFFICIAL')">
+            <img src="Gemini_Generated_Image_fvr7oofvr7oofvr7.jpg" class="home-logo">
+        </div>
+        <div id="server-list" style="display:flex; flex-direction:column; gap:15px; width:100%; align-items:center;"></div>
+        <div class="srv-icon" style="color:var(--accent); border-style:dashed;" onclick="createServer()">+</div>
     </nav>
 
     <aside id="side-channels">
-        <div style="padding:15px; font-weight:bold; border-bottom:1px solid rgba(0,0,0,0.2);" id="srv-title">VOID 공식</div>
-        <div id="user-list" style="flex:1; padding:10px;"></div>
-        <div style="padding:10px; background:rgba(0,0,0,0.2); display:flex; align-items:center; gap:10px;">
-            <img id="my-avatar" src="" style="width:32px; height:32px; border-radius:50%;">
-            <div id="my-name" style="flex:1; font-size:13px; font-weight:bold;">Guest</div>
-            <i class="fa-solid fa-gear" style="cursor:pointer;" onclick="openProfile()"></i>
+        <div id="srv-title">VOID OFFICIAL</div>
+        
+        <div class="list-header">Communication Channels</div>
+        <div class="item" onclick="switchRoom('global-1', 'VOID OFFICIAL')">
+            <i class="fa-solid fa-square"></i> GENERAL
+        </div>
+        
+        <div class="list-header">Active Entities</div>
+        <div id="user-list" style="flex:1; overflow-y:auto;"></div>
+
+        <div style="padding:15px; border-top:1px solid var(--border); display:flex; align-items:center; gap:10px; background:#000;">
+            <img id="my-avatar" src="" style="width:36px; height:36px; border:1px solid #333;">
+            <div id="my-name" style="flex:1; font-size:14px; font-weight:bold; color:white;">Guest</div>
+            <i class="fa-solid fa-cog" style="cursor:pointer; color:#666;" onclick="openProfile()"></i>
         </div>
     </aside>
 
     <main id="chat-main">
         <header>
-            <span id="chat-title"># 일반</span>
-            <i class="fa-solid fa-phone" style="cursor:pointer; color:#23a559;" onclick="startCall()"></i>
+            <span id="chat-title"># GENERAL</span>
+            <i class="fa-solid fa-phone" style="cursor:pointer; color:var(--text-dim); transition:0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#666'" onclick="startCall()"></i>
         </header>
         <div id="messages"></div>
         <div id="input-area">
             <div class="input-box">
-                <input type="text" id="msg-input" placeholder="메시지 입력..." onkeypress="if(event.key==='Enter') send()">
+                <input type="text" id="msg-input" placeholder="Transmitting data to the void..." onkeypress="if(event.key==='Enter') send()">
             </div>
         </div>
     </main>
 
     <div id="call-ui" class="modal">
-        <div class="modal-card" style="width:80%; max-width:800px;">
-            <div style="display:flex; justify-content:center; gap:10px; margin-bottom:20px;">
-                <video id="remote-v" autoplay playsinline style="width:48%; border-radius:8px; background:#000;"></video>
-                <video id="local-v" autoplay muted playsinline style="width:48%; border-radius:8px; background:#000;"></video>
+        <div class="modal-card" style="width:900px; max-width:90%;">
+            <div style="display:flex; justify-content:center; gap:20px; margin-bottom:30px;">
+                <video id="remote-v" autoplay playsinline style="width:45%; background:#000; border:1px solid var(--accent);"></video>
+                <video id="local-v" autoplay muted playsinline style="width:45%; background:#000; border:1px solid #333;"></video>
             </div>
-            <button class="btn-v" style="background:#ed4245; width:200px;" onclick="endCall()">통화 종료</button>
+            <button class="btn-v" style="background:transparent; border:1px solid red; color:red;" onclick="endCall()">TERMINATE SIGNAL</button>
         </div>
     </div>
 
@@ -107,19 +310,34 @@
     let myInfo = null, localStream = null, myPeerId = '';
     peer.on('open', id => myPeerId = id);
 
+    // [버그 수정: auth/invalid-email 해결]
     window.handleAuth = async (type) => {
-        const email = document.getElementById('email').value, pw = document.getElementById('pw').value;
+        // .trim()을 추가하여 공백 제거
+        const email = document.getElementById('email').value.trim();
+        const pw = document.getElementById('pw').value.trim();
+
+        // 입력값 검증 로직 추가
+        if (!email) return alert("ACCESS ID(이메일)를 입력하십시오.");
+        if (!pw) return alert("PASSWORD를 입력하십시오.");
+
         try {
             if(type === 'reg') {
-                const name = prompt('사용할 닉네임을 입력하세요:');
+                const name = prompt('식별 코드(닉네임) 입력:');
+                if(!name) return; 
+                
                 const res = await createUserWithEmailAndPassword(auth, email, pw);
                 await updateProfile(res.user, { displayName: name });
-                alert('가입 완료! 로그인 해주세요.');
+                alert('등록 완료. ACCESS ID로 로그인하십시오.');
             } else {
                 const res = await signInWithEmailAndPassword(auth, email, pw);
                 socket.emit('auth-success', { uid: res.user.uid, displayName: res.user.displayName });
             }
-        } catch(e) { alert(e.message); }
+        } catch(e) { 
+            // 에러 메시지 사용자 친화적으로 변경
+            if(e.code === 'auth/invalid-email') alert("잘못된 이메일 형식입니다.");
+            else if(e.code === 'auth/weak-password') alert("비밀번호는 6자리 이상이어야 합니다.");
+            else alert("오류 발생: " + e.message); 
+        }
     };
 
     socket.on('login-complete', user => {
@@ -127,7 +345,7 @@
         document.getElementById('auth-modal').style.display = 'none';
         document.getElementById('my-name').innerText = user.displayName;
         document.getElementById('my-avatar').src = user.avatar;
-        switchRoom('global-1', 'VOID 공식');
+        switchRoom('global-1', 'VOID OFFICIAL');
     });
 
     window.openProfile = () => { document.getElementById('new-name').value = myInfo.displayName; document.getElementById('profile-modal').style.display = 'flex'; };
@@ -135,13 +353,31 @@
     window.createServer = () => { const name = prompt('서버 이름:'); if(name) socket.emit('create-server', name); };
 
     socket.on('update-all', data => {
-        document.getElementById('server-list').innerHTML = data.servers.map(s => `<div class="srv-icon" onclick="switchRoom('${s.id}', '${s.name}')">${s.name[0]}</div>`).join('');
-        document.getElementById('user-list').innerHTML = `<div style="font-size:12px; color:#888; margin-bottom:10px;">접속자</div>` + 
-            data.users.filter(u => u.uid !== myInfo.uid).map(u => `<div class="item" onclick="startDM('${u.uid}', '${u.displayName}')"><img src="${u.avatar}" style="width:24px; border-radius:50%;"> ${u.displayName}</div>`).join('');
+        document.getElementById('server-list').innerHTML = data.servers.map(s => {
+            if(s.id === 'global-1') return ''; 
+            return `<div class="srv-icon" onclick="switchRoom('${s.id}', '${s.name}')">${s.name[0]}</div>`
+        }).join('');
+
+        document.getElementById('user-list').innerHTML = 
+            data.users.filter(u => u.uid !== myInfo.uid).map(u => `
+            <div class="item" onclick="startDM('${u.uid}', '${u.displayName}')">
+                <img src="${u.avatar}" style="width:24px; border-radius:50%; filter:grayscale(100%);"> ${u.displayName}
+            </div>`).join('');
     });
 
-    window.switchRoom = (id, name) => { socket.emit('join-room', id); document.getElementById('chat-title').innerText = `# ${name}`; document.getElementById('srv-title').innerText = name; document.getElementById('messages').innerHTML = ''; };
-    window.startDM = (uid, name) => { const dmId = [myInfo.uid, uid].sort().join('_'); socket.emit('join-room', dmId); document.getElementById('chat-title').innerText = `@ ${name}`; document.getElementById('messages').innerHTML = ''; };
+    window.switchRoom = (id, name) => { 
+        socket.emit('join-room', id); 
+        document.getElementById('chat-title').innerText = `# ${name.toUpperCase()}`; 
+        document.getElementById('srv-title').innerText = name; 
+        document.getElementById('messages').innerHTML = ''; 
+    };
+    
+    window.startDM = (uid, name) => { 
+        const dmId = [myInfo.uid, uid].sort().join('_'); 
+        socket.emit('join-room', dmId); 
+        document.getElementById('chat-title').innerText = `@ ${name.toUpperCase()}`; 
+        document.getElementById('messages').innerHTML = ''; 
+    };
 
     window.send = () => {
         const input = document.getElementById('msg-input'); if(!input.value) return;
@@ -153,7 +389,12 @@
         const dec = CryptoJS.AES.decrypt(d.msg, CRYPTO_KEY).toString(CryptoJS.enc.Utf8);
         const box = document.getElementById('messages');
         const div = document.createElement('div'); div.className = 'msg';
-        div.innerHTML = `<img src="${d.avatar}"><div><div><span class="msg-user">${d.sender}</span><span class="msg-time">${d.timestamp}</span></div><div>${dec}</div></div>`;
+        div.innerHTML = `
+            <img src="${d.avatar}">
+            <div class="msg-content">
+                <div><span class="msg-user">${d.sender}</span><span class="msg-time">${d.timestamp}</span></div>
+                <div class="msg-text">${dec}</div>
+            </div>`;
         box.appendChild(div); box.scrollTop = box.scrollHeight;
     });
 
@@ -168,7 +409,7 @@
     };
 
     socket.on('incoming-call', d => {
-        if(confirm(`${d.from}님의 통화 요청!`)) {
+        if(confirm(`Incoming transmission from ${d.from}. Accept?`)) {
             document.getElementById('call-ui').style.display = 'flex';
             navigator.mediaDevices.getUserMedia({video:true, audio:true}).then(s => {
                 localStream = s; document.getElementById('local-v').srcObject = s;
